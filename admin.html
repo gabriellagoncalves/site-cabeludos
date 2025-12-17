@@ -127,6 +127,8 @@
 
     <div class="tabs">
         <div class="tab active" onclick="abrirTab('agenda')"><i class="fa-regular fa-calendar-days"></i> Agenda</div>
+        <!-- NOVA ABA DE CLIENTES AQUI -->
+        <div class="tab" onclick="abrirTab('clientes')"><i class="fa-solid fa-users"></i> Clientes</div>
         <div class="tab" onclick="abrirTab('indicadores')"><i class="fa-solid fa-chart-pie"></i> Indicadores</div>
         <div class="tab" onclick="abrirTab('servicos')"><i class="fa-solid fa-scissors"></i> Serviços</div>
         <div class="tab" onclick="abrirTab('profissionais')"><i class="fa-solid fa-user-group"></i> Equipe</div>
@@ -151,6 +153,35 @@
             <div style="text-align: center; padding: 40px; color: #999;">
                 <i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Carregando dados...
             </div>
+        </div>
+    </div>
+
+    <!-- ABA CLIENTES (NOVA) -->
+    <div id="clientes" class="tab-content">
+        <div class="form-cadastro grid-form">
+            <div>
+                <label>Responsável:</label>
+                <input type="text" id="buscaResponsavel" placeholder="Buscar por nome..." oninput="carregarClientesAdmin()">
+            </div>
+            <div>
+                <label>Criança:</label>
+                <input type="text" id="buscaCrianca" placeholder="Buscar por nome..." oninput="carregarClientesAdmin()">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="tabelaClientes">
+                <thead>
+                    <tr>
+                        <th>Cód.</th>
+                        <th>Responsável</th>
+                        <th>Criança</th>
+                        <th>Nascimento</th>
+                        <th>Telefone</th>
+                        <th style="width: 80px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 

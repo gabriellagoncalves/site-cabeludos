@@ -74,6 +74,7 @@ function initAdmin() {
     carregarProfissionaisAdmin();
     carregarIndicadoresAdmin();
     carregarFiltroProfissionais();
+    carregarClientesAdmin(); // Carrega lista de clientes
 }
 
 function abrirTab(tabName) {
@@ -81,6 +82,60 @@ function abrirTab(tabName) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById(tabName).style.display = 'block';
     if(event) event.target.classList.add('active');
+}
+
+// --- ADMIN: CLIENTES (NOVA FUNÇÃO) ---
+async function carregarClientesAdmin() {
+    const termoResp = document.getElementById('buscaResponsavel')?.value.toLowerCase() || "";
+    const termoCrianca = document.getElementById('buscaCrianca')?.value.toLowerCase() || "";
+    const tbody = document.querySelector('#tabelaClientes tbody');
+    
+    if(!tbody) return;
+    
+    // Indicador de carregamento se for a primeira carga
+    if(!termoResp && !termoCrianca && tbody.innerHTML === "") {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Carregando...</td></tr>';
+    }
+
+    // Busca todos os clientes (ordenados por criação)
+    let query = supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
+    
+    const { data: clientes, error } = await query;
+
+    if (error) {
+        showToast("Erro ao carregar clientes: " + error.message, 'error');
+        return;
+    }
+
+    // Filtragem no Client-side para ser instantânea enquanto digita
+    const clientesFiltrados = clientes.filter(c => 
+        (c.nome_responsavel || "").toLowerCase().includes(termoResp) &&
+        (c.nome_crianca || "").toLowerCase().includes(termoCrianca)
+    );
+
+    tbody.innerHTML = "";
+
+    if (clientesFiltrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum cliente encontrado.</td></tr>';
+        return;
+    }
+
+    clientesFiltrados.forEach(c => {
+        // Formatar data nascimento
+        const nasc = c.data_nascimento ? new Date(c.data_nascimento).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : "-";
+        
+        tbody.innerHTML += `
+            <tr>
+                <td><strong>${c.codigo_cliente}</strong></td>
+                <td>${c.nome_responsavel}</td>
+                <td>${c.nome_crianca}</td>
+                <td>${nasc}</td>
+                <td>${c.telefone}</td>
+                <td>
+                    <button class="btn btn-red" style="padding:5px 10px; margin:0;" onclick="deletarItem('clientes', '${c.id}')"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`;
+    });
 }
 
 // --- ADMIN: SERVIÇOS ---
@@ -199,17 +254,10 @@ async function carregarIndicadoresAdmin() {
         }
     });
 
-    const elFat = document.getElementById('kpiFaturamento');
-    if(elFat) elFat.innerText = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    
-    const elTot = document.getElementById('kpiTotal');
-    if(elTot) elTot.innerText = total;
-    
-    const elCanc = document.getElementById('kpiCancelados');
-    if(elCanc) elCanc.innerText = cancelados;
-    
-    const elComp = document.getElementById('kpiComparecimento');
-    if(elComp) elComp.innerText = total > 0 ? ((compareceram / (total - cancelados)) * 100).toFixed(0) + '%' : '0%';
+    document.getElementById('kpiFaturamento').innerText = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('kpiTotal').innerText = total;
+    document.getElementById('kpiCancelados').innerText = cancelados;
+    document.getElementById('kpiComparecimento').innerText = total > 0 ? ((compareceram / (total - cancelados)) * 100).toFixed(0) + '%' : '0%';
 
     // Top Serviços
     const tbody = document.querySelector('#tabelaTopServicos tbody');
@@ -289,6 +337,7 @@ window.deletarItem = async function(tabela, id) {
     showToast("Item excluído", 'success');
     if (tabela === 'servicos') carregarServicosAdmin();
     if (tabela === 'profissionais') carregarProfissionaisAdmin();
+    if (tabela === 'clientes') carregarClientesAdmin();
 };
 
 // ============================================================
