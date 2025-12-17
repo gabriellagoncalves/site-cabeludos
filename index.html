@@ -4,61 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cabeludos & Cia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Verdana', sans-serif; background-color: #fdfbf7; margin:0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 400px; text-align: center; }
-        .logo-img { display: block; margin: 0 auto 30px auto; max-width: 200px; border-radius: 15px; }
-        .btn { display: block; width: 100%; padding: 20px; margin-bottom: 15px; border: none; border-radius: 15px; font-size: 18px; font-weight: bold; color: white; text-decoration: none; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; box-sizing: border-box; }
-        .btn:active { transform: scale(0.98); }
-        .btn-azul { background-color: #4facfe; } 
-        .btn-rosa { background-color: #ff69b4; } 
-        .btn-laranja { background-color: #ff9a44; } 
-        .btn-verde { background-color: #25d366; } 
-
-        /* Botão Admin */
-        .btn-admin {
-            position: fixed;
-            bottom: 15px;
-            right: 15px;
-            font-size: 24px;
-            color: #ccc;
-            text-decoration: none;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-            background: white;
-            width: 40px;
-            height: 40px;
-            line-height: 40px;
-            text-align: center;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 1000;
+        :root {
+            --primary: #FF69B4; 
+            --secondary: #20B2AA;
+            --bg: #f8f9fa;
         }
-        .btn-admin:hover { opacity: 1; color: #555; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); margin:0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        
+        .container { width: 100%; max-width: 400px; text-align: center; }
+        
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 40px;
+        }
+        .logo-img { 
+            width: 150px; height: 150px; object-fit: cover; border-radius: 50%; 
+            box-shadow: 0 10px 25px rgba(255, 105, 180, 0.3); border: 4px solid white;
+        }
+        
+        .menu-grid { display: flex; flex-direction: column; gap: 15px; }
+        
+        .btn-card {
+            background: white; padding: 20px; border-radius: 15px; text-decoration: none; color: #444;
+            display: flex; align-items: center; gap: 20px; transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;
+        }
+        .btn-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--secondary); }
+        
+        .icon-box {
+            width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; flex-shrink: 0;
+        }
+        .text-box { text-align: left; }
+        .text-box h3 { margin: 0; font-size: 16px; font-weight: 600; }
+        .text-box p { margin: 5px 0 0; font-size: 12px; color: #888; }
+
+        /* Cores dos Ícones */
+        .icon-blue { background: #e0f2fe; color: #0284c7; }
+        .icon-pink { background: #fce7f3; color: #db2777; }
+        .icon-orange { background: #ffedd5; color: #ea580c; }
+        .icon-green { background: #dcfce7; color: #16a34a; }
+
+        .btn-admin {
+            position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
+            background: white; border-radius: 50%; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center; color: #999;
+            text-decoration: none; font-size: 20px; transition: 0.3s;
+        }
+        .btn-admin:hover { color: var(--secondary); transform: rotate(90deg); }
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Cabeludos & Cia" class="logo-img">
+        <div class="logo-container">
+            <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Cabeludos & Cia" class="logo-img">
+        </div>
         
-        <a href="cadastro.html" class="btn btn-azul">
-            👶 Cliente novo?<br><small>Faça seu cadastro aqui</small>
-        </a>
-        
-        <a href="agendar.html" class="btn btn-rosa">
-            📅 Já possui cadastro?<br><small>Agende seu horário aqui</small>
-        </a>
-        
-        <a href="gerenciar.html" class="btn btn-laranja">
-            🔄 Cancelar ou Remarcar
-        </a>
-        
-        <a href="https://wa.me/554896304505" target="_blank" class="btn btn-verde">
-            💬 Fale conosco<br><small>WhatsApp</small>
-        </a>
+        <div class="menu-grid">
+            <a href="cadastro.html" class="btn-card">
+                <div class="icon-box icon-blue"><i class="fa-solid fa-baby"></i></div>
+                <div class="text-box">
+                    <h3>Cliente Novo?</h3>
+                    <p>Faça seu cadastro aqui</p>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="margin-left: auto; color: #ddd;"></i>
+            </a>
+            
+            <a href="agendar.html" class="btn-card">
+                <div class="icon-box icon-pink"><i class="fa-regular fa-calendar-check"></i></div>
+                <div class="text-box">
+                    <h3>Já tem cadastro?</h3>
+                    <p>Agende seu horário</p>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="margin-left: auto; color: #ddd;"></i>
+            </a>
+            
+            <a href="gerenciar.html" class="btn-card">
+                <div class="icon-box icon-orange"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="text-box">
+                    <h3>Meus Agendamentos</h3>
+                    <p>Cancelar ou remarcar</p>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="margin-left: auto; color: #ddd;"></i>
+            </a>
+            
+            <a href="https://wa.me/554896304505" target="_blank" class="btn-card">
+                <div class="icon-box icon-green"><i class="fa-brands fa-whatsapp"></i></div>
+                <div class="text-box">
+                    <h3>Fale Conosco</h3>
+                    <p>Atendimento via WhatsApp</p>
+                </div>
+            </a>
+        </div>
     </div>
 
-    <!-- Botão de Engrenagem (Link para Admin) -->
-    <a href="admin.html" class="btn-admin">⚙️</a>
+    <a href="admin.html" class="btn-admin" title="Admin"><i class="fa-solid fa-gear"></i></a>
 </body>
 </html>

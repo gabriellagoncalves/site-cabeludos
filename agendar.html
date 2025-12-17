@@ -4,69 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agendar</title>
-    <!-- Importando o Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #fff0f5; padding: 20px; }
-        .container { background: white; padding: 25px; border-radius: 15px; max-width: 500px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .logo-img { display: block; margin: 0 auto 20px auto; max-width: 150px; border-radius: 10px; }
-        .step { display: none; }
+        body { font-family: 'Poppins', sans-serif; background: #fff0f5; padding: 20px; display: flex; justify-content: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; }
+        
+        .header-nav { display: flex; align-items: center; margin-bottom: 20px; }
+        .back-link { text-decoration: none; color: #666; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        
+        .step { display: none; animation: fadeIn 0.4s; }
         .step.active { display: block; }
-        h2 { color: #ff69b4; text-align: center; }
-        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-next { background: #ff69b4; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; margin-top: 20px; font-size: 16px; cursor: pointer; }
-        .btn-next:disabled { background: #ccc; }
-        .slot-btn { background: white; border: 1px solid #ff69b4; color: #ff69b4; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; display: inline-block; }
-        .slot-btn.selected { background: #ff69b4; color: white; }
-        .fidelidade-box { background: #fff8e1; border: 2px dashed #ffc107; padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center; display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { color: #FF69B4; margin-top: 0; font-size: 22px; }
+        label { display: block; margin-top: 15px; font-weight: 600; color: #4b5563; font-size: 14px; }
+        
+        input, select { 
+            width: 100%; padding: 12px; margin-top: 5px; border: 2px solid #f3f4f6; border-radius: 10px; 
+            font-family: inherit; font-size: 15px; box-sizing: border-box; transition: 0.3s;
+        }
+        input:focus, select:focus { border-color: #FF69B4; outline: none; }
+        
+        .btn-next { 
+            background: #FF69B4; color: white; width: 100%; padding: 15px; border: none; border-radius: 12px; 
+            margin-top: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; 
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+        }
+        .btn-next:hover { background: #db2777; transform: translateY(-2px); }
+        .btn-next:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; transform: none; }
+        
+        /* Grid de Horários */
+        #listaHorarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        .slot-btn { 
+            background: white; border: 2px solid #e5e7eb; color: #374151; padding: 10px 5px; border-radius: 8px; 
+            cursor: pointer; text-align: center; font-size: 14px; transition: 0.2s; 
+        }
+        .slot-btn:hover { border-color: #FF69B4; color: #FF69B4; }
+        .slot-btn.selected { background: #FF69B4; color: white; border-color: #FF69B4; box-shadow: 0 4px 6px rgba(255, 105, 180, 0.3); }
+        
+        .fidelidade-box { 
+            background: #fffbeb; border: 1px dashed #f59e0b; padding: 15px; border-radius: 10px; 
+            margin: 15px 0; text-align: center; color: #d97706; font-size: 14px; font-weight: 500; display: none;
+        }
+        
+        .info-card { background: #f0fdf4; border-left: 4px solid #4ade80; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Logo" class="logo-img">
+    <div class="header-nav">
+        <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+    </div>
     
     <!-- Passo 1: Identificação -->
     <div id="step1" class="step active">
-        <h2>🔐 Identificação</h2>
+        <div style="text-align:center; margin-bottom:30px;">
+            <i class="fa-solid fa-user-lock" style="font-size: 40px; color: #FF69B4; background: #fff0f5; padding: 20px; border-radius: 50%;"></i>
+        </div>
+        <h2>Identificação</h2>
+        <p style="color:#666; font-size:14px;">Digite seu código de cliente para continuar.</p>
+        
         <label>Código do Cliente:</label>
-        <input type="text" id="idClienteInput" placeholder="Ex: 2025-15-123">
-        <button class="btn-next" id="btnBuscarCliente">Buscar Cadastro</button>
+        <input type="text" id="idClienteInput" placeholder="Ex: 2025-1234">
+        <button class="btn-next" id="btnBuscarCliente">Acessar <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 
     <!-- Passo 2: Agendamento -->
     <div id="step2" class="step">
-        <h2>✂️ Escolha o Serviço</h2>
-        <div id="infoCliente" style="background:#e6ffe6; padding:10px; border-radius:8px; text-align:center;"></div>
-        
+        <h2>Escolha o Serviço</h2>
+        <div id="infoCliente" class="info-card"></div>
         <div id="fidelidadeArea" class="fidelidade-box"></div>
 
-        <label>Serviço:</label>
+        <label><i class="fa-solid fa-scissors"></i> Serviço:</label>
         <select id="servicoSelect">
-            <option value="">Carregando serviços...</option>
-            <!-- Os serviços virão do banco de dados automaticamente -->
+            <option value="">Selecione...</option>
         </select>
         
-        <label>Data:</label>
+        <label><i class="fa-regular fa-calendar"></i> Data:</label>
         <input type="date" id="dataInput">
         
-        <label>Horários Disponíveis:</label>
-        <div id="listaHorarios" style="text-align:center; padding:10px; border:1px solid #eee; border-radius:5px;">
-            Selecione serviço e data...
+        <label><i class="fa-regular fa-clock"></i> Horários Disponíveis:</label>
+        <div id="listaHorarios" style="min-height: 50px; display: flex; align-items: center; justify-content: center; color: #999;">
+            <small>Selecione serviço e data primeiro</small>
         </div>
         
         <button class="btn-next" id="btnConfirmarAgendamento" disabled>Confirmar Agendamento</button>
     </div>
 
     <!-- Passo 3: Sucesso -->
-    <div id="step3" class="step" style="text-align: center;">
-        <h1>✨</h1>
-        <h2 style="color: #25d366;">Agendado com Sucesso!</h2>
-        <p>Estamos te esperando!</p>
-        <button id="btnZap" class="btn-next" style="background-color:#25d366;">Enviar no WhatsApp 💬</button>
-        <br><br>
-        <a href="index.html" style="color: #ff69b4;">Voltar ao início</a>
+    <div id="step3" class="step" style="text-align: center; padding: 40px 0;">
+        <div style="font-size: 60px; color: #10b981; margin-bottom: 20px;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h2 style="color: #333;">Tudo Certo!</h2>
+        <p style="color: #666;">Seu horário foi agendado com sucesso.</p>
+        
+        <button id="btnZap" class="btn-next" style="background-color:#25d366; margin-bottom: 10px;">
+            <i class="fa-brands fa-whatsapp"></i> Receber Comprovante
+        </button>
+        
+        <a href="index.html" style="color: #FF69B4; text-decoration: none; font-weight: 600; display: block; margin-top: 20px;">Voltar ao início</a>
     </div>
 </div>
 

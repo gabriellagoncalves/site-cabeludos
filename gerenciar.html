@@ -4,33 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciar</title>
-    <!-- Importando o Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #fff8e1; padding: 20px; }
-        .container { background: white; padding: 25px; border-radius: 15px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .logo-img { display: block; margin: 0 auto 20px auto; max-width: 150px; border-radius: 10px; }
-        h2 { color: #ff9a44; text-align: center; }
-        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn-busca { background: #ff9a44; color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; margin-top: 15px; cursor: pointer; }
-        .card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-top: 15px; background: #fafafa; }
-        .btn-cancelar { background: #dc3545; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; }
+        body { font-family: 'Poppins', sans-serif; background: #fff7ed; padding: 20px; display: flex; justify-content: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        
+        h2 { color: #ea580c; text-align: center; margin-top: 0; }
+        .back-link { display: block; margin-bottom: 20px; color: #666; text-decoration: none; font-size: 14px; }
+
+        input { width: 100%; padding: 12px; margin-top: 10px; border: 2px solid #fff7ed; border-radius: 10px; box-sizing: border-box; font-family: inherit; }
+        input:focus { border-color: #ea580c; outline: none; }
+        
+        .btn-busca { background: #ea580c; color: white; width: 100%; padding: 12px; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-busca:hover { background: #c2410c; }
+        
+        .card { 
+            border: 1px solid #eee; padding: 20px; border-radius: 12px; margin-top: 20px; background: #fafafa; 
+            display: flex; flex-direction: column; gap: 10px; transition: 0.3s;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        .card-header { display: flex; align-items: center; gap: 10px; color: #333; font-weight: 600; font-size: 18px; }
+        .card-icon { color: #ea580c; }
+        
+        .btn-cancelar { 
+            background: white; color: #ef4444; border: 1px solid #ef4444; padding: 10px; border-radius: 8px; 
+            cursor: pointer; margin-top: 10px; width: 100%; font-weight: 600; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-cancelar:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Logo" class="logo-img">
-    <h2>🔄 Meus Agendamentos</h2>
+    <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
     
-    <label>Código do Cliente:</label>
-    <input type="text" id="idClienteBusca" placeholder="Ex: 2025-15-123">
-    <button class="btn-busca" id="btnBuscarAgendamentos">Buscar Agendamentos</button>
+    <h2>Meus Agendamentos</h2>
+    <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 20px;">Digite seu código para ver seus horários.</p>
+    
+    <label style="font-weight: 600; color: #444;">Código do Cliente:</label>
+    <input type="text" id="idClienteBusca" placeholder="Ex: 2025-1234">
+    <button class="btn-busca" id="btnBuscarAgendamentos"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
     
     <div id="listaResultados"></div>
-    
-    <br>
-    <div style="text-align:center;"><a href="index.html" style="color: #ff9a44;">Voltar ao Menu</a></div>
 </div>
 
 <script src="script.js"></script>

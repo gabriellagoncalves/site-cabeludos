@@ -4,79 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro</title>
-    <!-- Importando o Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #e0f7fa; padding: 20px; }
-        .box { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .logo-img { display: block; margin: 0 auto 20px auto; max-width: 150px; border-radius: 10px; }
-        label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { background: #4facfe; color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; margin-top: 20px; font-size: 16px; cursor: pointer; }
+        body { font-family: 'Poppins', sans-serif; background: #e0f7fa; padding: 20px; display: flex; justify-content: center; min-height: 100vh; margin: 0; }
+        .box { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        
+        h2 { text-align: center; color: #0284c7; margin-top: 0; }
+        .back-link { display: block; margin-bottom: 20px; color: #666; text-decoration: none; font-size: 14px; }
+        
+        label { display: block; margin-top: 15px; font-weight: 600; color: #4b5563; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 2px solid #f0f9ff; border-radius: 10px; box-sizing: border-box; transition: 0.3s; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: #0284c7; outline: none; background: #f0f9ff; }
+        
+        button { background: #0284c7; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; margin-top: 25px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3); }
+        button:hover { background: #0369a1; transform: translateY(-2px); }
+        
+        hr { border: 0; height: 1px; background: #e5e7eb; margin: 25px 0; }
+        .section-title { font-size: 14px; color: #0284c7; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        
         .hidden { display: none; }
-        .sucesso { background: #d4edda; color: #155724; padding: 20px; border-radius: 5px; text-align: center; }
-        .codigo-destaque { font-size: 24px; font-weight: bold; color: #007bff; margin: 10px 0; display: block; background: #fff; padding: 10px; border: 2px dashed #007bff; }
+        .sucesso { text-align: center; padding: 40px 20px; }
+        .codigo-destaque { font-size: 28px; font-weight: 700; color: #0284c7; margin: 20px 0; display: block; background: #f0f9ff; padding: 15px; border-radius: 10px; letter-spacing: 2px; border: 2px dashed #0284c7; }
     </style>
 </head>
 <body>
 
 <div class="box" id="formBox">
-    <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Logo" class="logo-img">
-    <h2 style="color: #007bff; text-align: center;">Novo Cadastro</h2>
+    <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+    <h2>Novo Cadastro</h2>
+    <p style="text-align: center; color: #666; font-size: 14px;">Preencha os dados abaixo para começar.</p>
     
     <form id="formCadastro">
-        <label>Nome do Responsável:</label>
-        <input type="text" id="responsavel" required>
+        <div class="section-title"><i class="fa-solid fa-user"></i> Responsável</div>
+        <label>Nome Completo:</label>
+        <input type="text" id="responsavel" required placeholder="Nome do pai, mãe ou responsável">
         
         <label>Telefone/WhatsApp:</label>
-        <input type="tel" id="telefone" required>
+        <input type="tel" id="telefone" required placeholder="(XX) 9XXXX-XXXX">
         
-        <label>E-mail (Opcional):</label>
-        <input type="email" id="email">
-        
-        <label>Instagram (Opcional):</label>
-        <input type="text" id="instagram">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+                <label>E-mail (Opcional):</label>
+                <input type="email" id="email">
+            </div>
+            <div>
+                <label>Instagram (Opcional):</label>
+                <input type="text" id="instagram" placeholder="@usuario">
+            </div>
+        </div>
         
         <hr>
+        <div class="section-title"><i class="fa-solid fa-child"></i> Criança</div>
+        
         <label>Nome da Criança:</label>
         <input type="text" id="crianca" required>
         
         <label>Data de Nascimento:</label>
         <input type="date" id="nascimento" required>
         
-        <label>Observação:</label>
-        <textarea id="obs" rows="3"></textarea>
+        <label>Observação (Medos, preferências...):</label>
+        <textarea id="obs" rows="2"></textarea>
         
-        <label>Origem:</label>
-        <select id="origem">
-            <option>Indicação</option>
-            <option>Instagram</option>
-            <option>Facebook</option>
-            <option>Outro</option>
-        </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+                <label>Origem:</label>
+                <select id="origem">
+                    <option>Indicação</option>
+                    <option>Instagram</option>
+                    <option>Facebook</option>
+                    <option>Outro</option>
+                </select>
+            </div>
+            <div>
+                <label>Autoriza fotos?</label>
+                <select id="foto">
+                    <option value="Sim">Sim</option>
+                    <option value="Nao">Não</option>
+                </select>
+            </div>
+        </div>
         
-        <label>Autoriza fotos?</label>
-        <select id="foto">
-            <option value="Sim">Sim</option>
-            <option value="Nao">Não</option>
-        </select>
-        
-        <button type="submit" id="btnSalvar">Salvar Cadastro</button>
+        <button type="submit" id="btnSalvar">Concluir Cadastro</button>
     </form>
 </div>
 
 <div class="box hidden" id="sucessoBox">
     <div class="sucesso">
-        <h3>Cadastro realizado! 🎉</h3>
-        <p>Seu código é:</p>
+        <i class="fa-solid fa-star" style="font-size: 50px; color: #f59e0b; margin-bottom: 20px;"></i>
+        <h2 style="color: #333;">Cadastro Realizado!</h2>
+        <p>Seu código exclusivo de cliente é:</p>
         <span id="codigoGerado" class="codigo-destaque"></span>
-        <p>Tire um print desta tela!</p>
+        <p style="color: #ef4444; font-size: 13px;"><i class="fa-solid fa-camera"></i> Tire um print desta tela ou anote o código!</p>
         <br>
-        <a href="index.html" style="color: #007bff;">Voltar ao Menu</a>
+        <a href="index.html" style="color: white; background: #0284c7; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 600;">Ir para o Menu</a>
     </div>
 </div>
 
-<!-- Lógica do Site -->
 <script src="script.js"></script>
 </body>
 </html>
