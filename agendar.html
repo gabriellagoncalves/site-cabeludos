@@ -39,7 +39,7 @@
         #listaHorarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
         .slot-btn { 
             background: white; border: 2px solid #e5e7eb; color: #374151; padding: 10px 5px; border-radius: 8px; 
-            cursor: pointer; text-align: center; font-size: 14px; transition: 0.2s; 
+            cursor: pointer; text-align: center; font-size: 14px; transition: 0.2s; position: relative;
         }
         .slot-btn:hover { border-color: #FF69B4; color: #FF69B4; }
         .slot-btn.selected { background: #FF69B4; color: white; border-color: #FF69B4; box-shadow: 0 4px 6px rgba(255, 105, 180, 0.3); }
@@ -50,6 +50,25 @@
         }
         
         .info-card { background: #f0fdf4; border-left: 4px solid #4ade80; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+
+        /* Modal de Profissionais */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999; display: none;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px;
+            text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .prof-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .prof-btn {
+            background: #f3f4f6; border: 1px solid #e5e7eb; padding: 12px; border-radius: 8px;
+            cursor: pointer; font-weight: 600; color: #374151; transition: 0.2s; display: flex; align-items: center; gap: 10px;
+        }
+        .prof-btn:hover { background: #e0f2fe; border-color: #38bdf8; color: #0284c7; }
+        .prof-icon { background: #white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: white; color: #888; }
+        .info-selecao { margin-top: 15px; font-size: 13px; color: #666; font-style: italic; display: none; }
     </style>
 </head>
 <body>
@@ -80,7 +99,7 @@
 
         <label><i class="fa-solid fa-scissors"></i> Serviço:</label>
         <select id="servicoSelect">
-            <option value="">Selecione...</option>
+            <option value="">Carregando...</option>
         </select>
         
         <label><i class="fa-regular fa-calendar"></i> Data:</label>
@@ -90,6 +109,9 @@
         <div id="listaHorarios" style="min-height: 50px; display: flex; align-items: center; justify-content: center; color: #999;">
             <small>Selecione serviço e data primeiro</small>
         </div>
+        
+        <!-- Info de quem foi selecionado -->
+        <div id="infoSelecao" class="info-selecao"></div>
         
         <button class="btn-next" id="btnConfirmarAgendamento" disabled>Confirmar Agendamento</button>
     </div>
@@ -102,11 +124,21 @@
         <h2 style="color: #333;">Tudo Certo!</h2>
         <p style="color: #666;">Seu horário foi agendado com sucesso.</p>
         
-        <button id="btnZap" class="btn-next" style="background-color:#25d366; margin-bottom: 10px;">
+        <button id="btnZapComprovante" class="btn-next" style="background-color:#25d366; margin-bottom: 10px;" onclick="enviarComprovanteZap()">
             <i class="fa-brands fa-whatsapp"></i> Receber Comprovante
         </button>
         
         <a href="index.html" style="color: #FF69B4; text-decoration: none; font-weight: 600; display: block; margin-top: 20px;">Voltar ao início</a>
+    </div>
+</div>
+
+<!-- Modal Seleção de Profissional -->
+<div id="modalProfissionais" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="color: #333; margin-top:0;">Quem vai te atender?</h3>
+        <p style="color: #666; font-size: 14px;">Temos estes profissionais disponíveis neste horário:</p>
+        <div id="listaProfissionaisModal" class="prof-list"></div>
+        <button onclick="document.getElementById('modalProfissionais').style.display='none'" style="margin-top:15px; background:none; border:none; color:#888; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
