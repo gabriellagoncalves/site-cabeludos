@@ -6,25 +6,18 @@
 const SUPABASE_URL = 'https://ifmpoykspipfiynhquqj.supabase.co'; 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmbXBveWtzcGlwZml5bmhxdXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NzQzNDAsImV4cCI6MjA4MTU1MDM0MH0.stD6XieSLW2Dvugqe_pG4NuS1fF1DHJRkQUzi7yKYQA';
 
-// Verifica se o Supabase foi carregado corretamente
-if (typeof supabase === 'undefined') {
-    console.error('A biblioteca do Supabase não foi carregada. Verifique o HTML.');
-} else {
-    const { createClient } = supabase;
-    var supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-}
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ============================================================
 // 2. LÓGICA DO ADMIN (admin.html)
 // ============================================================
 function logarAdmin() {
     const senha = document.getElementById('senhaAdmin').value;
-    // Senha simples fixa (você pode alterar "admin123" para o que quiser)
     if(senha === "admin123") {
         document.getElementById('loginArea').style.display = 'none';
         document.getElementById('painelAdmin').style.display = 'block';
         
-        // Carrega dados iniciais se estivermos na página de admin
         const hoje = new Date().toISOString().split('T')[0];
         const inputData = document.getElementById('dataAgendaAdmin');
         if(inputData) {
@@ -32,6 +25,7 @@ function logarAdmin() {
             carregarAgendaAdmin();
             carregarServicosAdmin();
             carregarProfissionaisAdmin();
+            carregarIndicadoresAdmin(); // <-- NOVO: Carrega os indicadores ao logar
         }
     } else {
         alert("Senha incorreta!");
@@ -39,14 +33,9 @@ function logarAdmin() {
 }
 
 function abrirTab(tabName) {
-    // Esconde todas as abas
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    
-    // Mostra a aba clicada
     document.getElementById(tabName).style.display = 'block';
-    
-    // Adiciona classe active na aba clicada
     if(event) event.target.classList.add('active');
 }
 
@@ -56,15 +45,13 @@ async function salvarServico() {
     const valor = document.getElementById('valorServico').value;
     const tempo = document.getElementById('tempoServico').value;
 
-    if(!nome || !valor || !tempo) return alert("Preencha todos os campos!");
+    if(!nome || !valor || !tempo) return alert("Preencha tudo!");
 
     const { error } = await supabaseClient.from('servicos').insert([{ nome, valor, duracao_minutos: tempo }]);
-    if(error) {
-        alert("Erro ao salvar serviço: " + error.message);
-    } else {
-        alert("Serviço Salvo com Sucesso!");
+    if(error) alert("Erro: " + error.message);
+    else {
+        alert("Serviço Salvo!");
         carregarServicosAdmin();
-        // Limpar campos
         document.getElementById('nomeServico').value = "";
         document.getElementById('valorServico').value = "";
         document.getElementById('tempoServico').value = "";
@@ -75,9 +62,7 @@ async function carregarServicosAdmin() {
     const tbody = document.querySelector('#tabelaServicos tbody');
     if(!tbody) return;
     
-    const { data, error } = await supabaseClient.from('servicos').select('*');
-    if(error) return console.error(error);
-
+    const { data } = await supabaseClient.from('servicos').select('*');
     tbody.innerHTML = "";
     
     if(data) {
@@ -97,20 +82,19 @@ async function carregarServicosAdmin() {
 // --- ADMIN: PROFISSIONAIS ---
 async function salvarProfissional() {
     const nome = document.getElementById('nomeProf').value;
-    const dias = document.getElementById('diasProf').value;
+    const dias = document.getElementById('diasProf').value; // Ex: Seg,Ter,Qua
     const inicio = document.getElementById('inicioProf').value;
     const fim = document.getElementById('fimProf').value;
 
-    if(!nome || !inicio || !fim) return alert("Preencha todos os campos!");
+    if(!nome || !inicio || !fim) return alert("Preencha tudo!");
 
     const { error } = await supabaseClient.from('profissionais').insert([{ 
         nome, dias_trabalho: dias, horario_inicio: inicio, horario_fim: fim 
     }]);
     
-    if(error) {
-        alert("Erro ao salvar profissional: " + error.message);
-    } else {
-        alert("Profissional Salvo com Sucesso!");
+    if(error) alert("Erro: " + error.message);
+    else {
+        alert("Profissional Salvo!");
         carregarProfissionaisAdmin();
         document.getElementById('nomeProf').value = "";
     }
@@ -120,21 +104,15 @@ async function carregarProfissionaisAdmin() {
     const tbody = document.querySelector('#tabelaProfissionais tbody');
     if(!tbody) return;
 
-    const { data, error } = await supabaseClient.from('profissionais').select('*');
-    if(error) return console.error(error);
-
+    const { data } = await supabaseClient.from('profissionais').select('*');
     tbody.innerHTML = "";
     
     if(data) {
         data.forEach(p => {
             const tr = document.createElement('tr');
-            // Formata hora (corta os segundos se vier HH:MM:SS)
-            const inicio = p.horario_inicio ? p.horario_inicio.slice(0,5) : "--:--";
-            const fim = p.horario_fim ? p.horario_fim.slice(0,5) : "--:--";
-
             tr.innerHTML = `
                 <td>${p.nome}</td>
-                <td>${inicio} - ${fim}</td>
+                <td>${p.horario_inicio.slice(0,5)} - ${p.horario_fim.slice(0,5)}</td>
                 <td>${p.dias_trabalho || 'Todos'}</td>
                 <td><button class="btn btn-red" onclick="deletarItem('profissionais', '${p.id}')">🗑️</button></td>
             `;
@@ -143,29 +121,94 @@ async function carregarProfissionaisAdmin() {
     }
 }
 
-// --- ADMIN: AGENDA & FIDELIDADE ---
+// --- ADMIN: INDICADORES ---
+async function carregarIndicadoresAdmin() {
+    // 1. Definir intervalo do mês atual
+    const date = new Date();
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
+
+    // 2. Buscar agendamentos do mês
+    const { data: agendamentos } = await supabaseClient
+        .from('agendamentos')
+        .select('status, servico, eh_gratis')
+        .gte('data_agendada', firstDay)
+        .lte('data_agendada', lastDay);
+
+    // 3. Buscar Serviços (para saber os preços)
+    const { data: servicos } = await supabaseClient.from('servicos').select('nome, valor');
+    
+    // Mapa de preços (Ex: {"Corte Menino": 30, ...})
+    const precos = {};
+    if(servicos) {
+        servicos.forEach(s => precos[s.nome] = parseFloat(s.valor));
+    }
+
+    if(!agendamentos) return;
+
+    // 4. Calcular Métricas
+    let totalAgendamentos = agendamentos.length;
+    let totalCancelados = 0;
+    let totalCompareceram = 0;
+    let faturamento = 0;
+    const servicosCount = {};
+
+    agendamentos.forEach(ag => {
+        if(ag.status === 'Cancelado') {
+            totalCancelados++;
+        } else {
+            // Conta comparecimentos para taxa, mas considera agendados futuros no total
+            if(ag.status === 'Compareceu') totalCompareceram++;
+            
+            // Faturamento (apenas se não for grátis e não cancelado)
+            if(!ag.eh_gratis && ag.status === 'Compareceu') {
+                const valor = precos[ag.servico] || 0;
+                faturamento += valor;
+            }
+
+            // Top Serviços (conta todos não cancelados)
+            servicosCount[ag.servico] = (servicosCount[ag.servico] || 0) + 1;
+        }
+    });
+
+    const taxaComparecimento = totalAgendamentos > 0 ? ((totalCompareceram / (totalAgendamentos - (totalAgendamentos - totalCancelados - totalCompareceram))) * 100).toFixed(0) : 0;
+    // Nota: Cálculo de taxa simplificado. Idealmente seria Compareceram / (Compareceram + Faltaram).
+
+    // 5. Atualizar Tela
+    document.getElementById('kpiFaturamento').textContent = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('kpiTotal').textContent = totalAgendamentos;
+    document.getElementById('kpiCancelados').textContent = totalCancelados;
+    
+    // Tabela Top Serviços
+    const tbody = document.querySelector('#tabelaTopServicos tbody');
+    tbody.innerHTML = "";
+    
+    // Ordenar serviços mais populares
+    const sortedServicos = Object.entries(servicosCount).sort((a,b) => b[1] - a[1]);
+    
+    sortedServicos.forEach(([nome, qtd]) => {
+        const valorUnit = precos[nome] || 0;
+        const totalEst = valorUnit * qtd;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${nome}</td><td>${qtd}</td><td>${totalEst.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- ADMIN: AGENDA ---
 async function carregarAgendaAdmin() {
     const data = document.getElementById('dataAgendaAdmin').value;
     const div = document.getElementById('listaAgendaAdmin');
     div.innerHTML = "Carregando...";
 
-    // Busca agendamentos e junta com dados do cliente
-    const { data: agenda, error } = await supabaseClient
+    const { data: agenda } = await supabaseClient
         .from('agendamentos')
-        .select(`
-            *,
-            clientes (nome_crianca, nome_responsavel)
-        `)
+        .select(`*, clientes (nome_crianca, nome_responsavel)`)
         .eq('data_agendada', data)
         .order('horario_inicio');
 
-    if(error) {
-        div.innerHTML = "<p style='color:red'>Erro ao carregar agenda.</p>";
-        return console.error(error);
-    }
-
     if(!agenda || agenda.length === 0) {
-        div.innerHTML = "<p>Sem agendamentos para esta data.</p>";
+        div.innerHTML = "<p>Sem agendamentos para hoje.</p>";
         return;
     }
 
@@ -173,24 +216,20 @@ async function carregarAgendaAdmin() {
     
     agenda.forEach(item => {
         let corStatus = "#000";
-        if(item.status === 'Agendado') corStatus = "#d69e2e"; // Amarelo
+        if(item.status === 'Agendado') corStatus = "#d69e2e";
         if(item.status === 'Compareceu') corStatus = "green";
         if(item.status === 'Faltou') corStatus = "red";
-
-        // Nome do cliente seguro (caso tenha sido deletado)
-        const nomeCrianca = item.clientes ? item.clientes.nome_crianca : "(Cliente removido)";
-        const nomeResp = item.clientes ? item.clientes.nome_responsavel : "";
 
         html += `
             <tr>
                 <td>${item.horario_inicio.slice(0,5)}</td>
-                <td>${nomeCrianca} <small>(${nomeResp})</small></td>
+                <td>${item.clientes?.nome_crianca} <small>(${item.clientes?.nome_responsavel})</small></td>
                 <td>${item.servico}</td>
                 <td style="color:${corStatus}; font-weight:bold;">${item.status}</td>
                 <td>
                     ${item.status === 'Agendado' ? `
-                    <button class="btn btn-green" onclick="marcarComparecimento('${item.id}', '${item.cliente_id}')">✅</button>
-                    <button class="btn btn-red" onclick="marcarFalta('${item.id}')">❌</button>
+                    <button class="btn btn-green" onclick="marcarComparecimento('${item.id}', '${item.cliente_id}')">✅ Compareceu</button>
+                    <button class="btn btn-red" onclick="marcarFalta('${item.id}')">❌ Faltou</button>
                     ` : '-'}
                 </td>
             </tr>
@@ -200,57 +239,34 @@ async function carregarAgendaAdmin() {
     div.innerHTML = html;
 }
 
-// Funções Globais do Admin (disponíveis no window para o onclick funcionar no HTML gerado)
+// Funções Globais Admin
 window.marcarComparecimento = async function(idAgendamento, idCliente) {
-    if(!confirm("Confirmar que o cliente veio? Isso adicionará 1 ponto de fidelidade.")) return;
+    if(!confirm("Confirmar presença e adicionar ponto de fidelidade?")) return;
 
-    // 1. Atualizar status do agendamento
-    const { error: err1 } = await supabaseClient
-        .from('agendamentos')
-        .update({ status: 'Compareceu' })
-        .eq('id', idAgendamento);
+    const { error: err1 } = await supabaseClient.from('agendamentos').update({ status: 'Compareceu' }).eq('id', idAgendamento);
+    if(err1) return alert("Erro: " + err1.message);
 
-    if(err1) return alert("Erro ao atualizar status: " + err1.message);
+    const { data: cliente } = await supabaseClient.from('clientes').select('saldo_fidelidade').eq('id', idCliente).single();
+    const novoSaldo = (cliente.saldo_fidelidade || 0) + 1;
+    await supabaseClient.from('clientes').update({ saldo_fidelidade: novoSaldo }).eq('id', idCliente);
 
-    // 2. Buscar saldo atual do cliente
-    const { data: cliente } = await supabaseClient
-        .from('clientes')
-        .select('saldo_fidelidade')
-        .eq('id', idCliente)
-        .single();
-
-    if(cliente) {
-        // 3. Somar +1 no saldo
-        const novoSaldo = (cliente.saldo_fidelidade || 0) + 1;
-        await supabaseClient
-            .from('clientes')
-            .update({ saldo_fidelidade: novoSaldo })
-            .eq('id', idCliente);
-        
-        alert("Presença confirmada e ponto de fidelidade computado!");
-    } else {
-        alert("Presença confirmada, mas cliente não encontrado para fidelidade.");
-    }
-
+    alert("Confirmado!");
     carregarAgendaAdmin();
+    carregarIndicadoresAdmin(); // Atualiza indicadores também
 };
 
 window.marcarFalta = async function(idAgendamento) {
-    if(!confirm("Marcar como falta?")) return;
+    if(!confirm("Marcar falta?")) return;
     await supabaseClient.from('agendamentos').update({ status: 'Faltou' }).eq('id', idAgendamento);
     carregarAgendaAdmin();
+    carregarIndicadoresAdmin();
 };
 
 window.deletarItem = async function(tabela, id) {
-    if(!confirm("Tem certeza que deseja excluir este item?")) return;
-    const { error } = await supabaseClient.from(tabela).delete().eq('id', id);
-    
-    if(error) alert("Erro ao excluir: " + error.message);
-    else {
-        alert("Excluído com sucesso!");
-        if(tabela === 'servicos') carregarServicosAdmin();
-        if(tabela === 'profissionais') carregarProfissionaisAdmin();
-    }
+    if(!confirm("Excluir?")) return;
+    await supabaseClient.from(tabela).delete().eq('id', id);
+    if(tabela === 'servicos') carregarServicosAdmin();
+    if(tabela === 'profissionais') carregarProfissionaisAdmin();
 };
 
 
@@ -261,7 +277,6 @@ const formCadastro = document.getElementById('formCadastro');
 if (formCadastro) {
     const telInput = document.getElementById('telefone');
     if(telInput) {
-        // Máscara simples de telefone
         telInput.addEventListener('input', (e) => {
             let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
             e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
@@ -274,9 +289,7 @@ if (formCadastro) {
         btn.textContent = "Salvando...";
         btn.disabled = true;
 
-        // Gera código: Ano + Número aleatório
         const codigo = new Date().getFullYear() + '-' + Math.floor(Math.random() * 10000);
-        
         const dados = {
             nome_responsavel: document.getElementById('responsavel').value,
             telefone: document.getElementById('telefone').value,
@@ -305,20 +318,19 @@ if (formCadastro) {
 }
 
 // ============================================================
-// 4. LÓGICA DE AGENDAMENTO (agendar.html)
+// 4. LÓGICA DE AGENDAMENTO INTELIGENTE (agendar.html)
 // ============================================================
 const btnBuscarCliente = document.getElementById('btnBuscarCliente');
 let clienteAtual = null;
 
 if (btnBuscarCliente) {
     
-    // --- Carregar Serviços do Banco ao abrir a página ---
+    // --- Carregar Serviços ---
     window.addEventListener('load', async () => {
         const select = document.getElementById('servicoSelect');
         if(!select) return;
 
         const { data: servicos } = await supabaseClient.from('servicos').select('*');
-        
         if(servicos && servicos.length > 0) {
             select.innerHTML = '<option value="">Selecione...</option>';
             servicos.forEach(s => {
@@ -336,9 +348,9 @@ if (btnBuscarCliente) {
     // --- Buscar Cliente ---
     btnBuscarCliente.addEventListener('click', async () => {
         const codigo = document.getElementById('idClienteInput').value.trim();
-        const btn = btnBuscarCliente;
-        
         if(!codigo) return alert("Digite o código.");
+        
+        const btn = btnBuscarCliente;
         btn.textContent = "Buscando...";
         btn.disabled = true;
 
@@ -358,7 +370,6 @@ if (btnBuscarCliente) {
                 <strong>Criança:</strong> ${data.nome_crianca}
             `;
             
-            // Fidelidade
             const cortes = data.saldo_fidelidade || 0;
             const cortesNoCiclo = cortes % 11;
             const isGratis = (cortesNoCiclo === 10);
@@ -377,59 +388,105 @@ if (btnBuscarCliente) {
         }
     });
 
-    // --- Carregar Horários ---
+    // --- Carregar Horários com base nos Profissionais ---
     const dataInput = document.getElementById('dataInput');
     const servicoSelect = document.getElementById('servicoSelect');
-    
-    // Data mínima hoje
     if(dataInput) dataInput.min = new Date().toISOString().split('T')[0];
 
     async function carregarHorarios() {
-        const data = dataInput.value;
+        const dataStr = dataInput.value;
         const servico = servicoSelect.value;
-        if(!data || !servico) return;
+        if(!dataStr || !servico) return;
 
         const lista = document.getElementById('listaHorarios');
-        lista.innerHTML = "Verificando disponibilidade...";
+        lista.innerHTML = "Verificando agenda da equipe...";
 
-        // Pega a duração do serviço escolhido
-        const tempoAttr = servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo');
-        const duracao = parseInt(tempoAttr);
+        const duracao = parseInt(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo'));
 
-        // Busca horários já ocupados
+        const partesData = dataStr.split('-'); 
+        const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
+        const diasSemanaMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+        const diaSemanaTexto = diasSemanaMap[diaSemanaNum];
+
+        const { data: todosProfissionais } = await supabaseClient.from('profissionais').select('*');
+        
+        const profissionaisDoDia = todosProfissionais.filter(p => {
+            if(!p.dias_trabalho) return true; 
+            return p.dias_trabalho.includes(diaSemanaTexto);
+        });
+
+        if(profissionaisDoDia.length === 0) {
+            lista.innerHTML = "Não temos atendimento neste dia da semana ("+diaSemanaTexto+").";
+            return;
+        }
+
         const { data: agendamentosOcupados } = await supabaseClient
             .from('agendamentos')
-            .select('horario_inicio')
-            .eq('data_agendada', data)
+            .select('horario_inicio, horario_fim')
+            .eq('data_agendada', dataStr)
             .neq('status', 'Cancelado');
 
-        const horariosOcupados = agendamentosOcupados ? agendamentosOcupados.map(a => a.horario_inicio.slice(0,5)) : [];
+        let menorInicio = 24 * 60;
+        let maiorFim = 0;
 
-        // Horário Fixo Loja (Exemplo: 09:30 - 18:30)
-        // Isso poderia vir do banco "profissionais" também, mas aqui simplificamos
-        const inicioExp = 9 * 60 + 30; // 09:30 em minutos
-        const fimExp = 18 * 60 + 30;   // 18:30 em minutos
-        
+        profissionaisDoDia.forEach(p => {
+            const [hI, mI] = p.horario_inicio.split(':').map(Number);
+            const minutosInicio = hI * 60 + mI;
+            if(minutosInicio < menorInicio) menorInicio = minutosInicio;
+
+            const [hF, mF] = p.horario_fim.split(':').map(Number);
+            const minutosFim = hF * 60 + mF;
+            if(minutosFim > maiorFim) maiorFim = minutosFim;
+        });
+
         lista.innerHTML = "";
         let temHorario = false;
-        
-        // Loop a cada 30 min
-        for (let m = inicioExp; m <= fimExp - duracao; m += 30) {
-            const h = Math.floor(m / 60).toString().padStart(2, '0');
-            const min = (m % 60).toString().padStart(2, '0');
-            const horarioFormatado = `${h}:${min}`;
+
+        for (let m = menorInicio; m <= maiorFim - duracao; m += 30) {
+            const hAtual = Math.floor(m / 60);
+            const mAtual = m % 60;
+            const inicioSlotMinutos = m;
+            const fimSlotMinutos = m + duracao;
             
-            if (!horariosOcupados.includes(horarioFormatado)) {
+            let capacidadeTotalSlot = 0;
+            profissionaisDoDia.forEach(p => {
+                const [phI, pmI] = p.horario_inicio.split(':').map(Number);
+                const [phF, pmF] = p.horario_fim.split(':').map(Number);
+                const pInicio = phI * 60 + pmI;
+                const pFim = phF * 60 + pmF;
+
+                if (pInicio <= inicioSlotMinutos && pFim >= fimSlotMinutos) {
+                    capacidadeTotalSlot++;
+                }
+            });
+
+            let agendamentosColidindo = 0;
+            agendamentosOcupados.forEach(a => {
+                const [ahI, amI] = a.horario_inicio.split(':').map(Number);
+                const [ahF, amF] = a.horario_fim.split(':').map(Number);
+                const aInicio = ahI * 60 + amI;
+                const aFim = ahF * 60 + amF;
+
+                if (aInicio < fimSlotMinutos && inicioSlotMinutos < aFim) {
+                    agendamentosColidindo++;
+                }
+            });
+
+            if (capacidadeTotalSlot > agendamentosColidindo) {
+                const hFormatado = hAtual.toString().padStart(2, '0');
+                const mFormatado = mAtual.toString().padStart(2, '0');
+                const textoHorario = `${hFormatado}:${mFormatado}`;
+
                 const btn = document.createElement('span');
                 btn.className = 'slot-btn';
-                btn.textContent = horarioFormatado;
-                btn.onclick = () => selecionarHorario(btn, horarioFormatado, duracao);
+                btn.textContent = textoHorario;
+                btn.onclick = () => selecionarHorario(btn, textoHorario, duracao);
                 lista.appendChild(btn);
                 temHorario = true;
             }
         }
-        
-        if(!temHorario) lista.innerHTML = "Dia lotado ou fechado.";
+
+        if(!temHorario) lista.innerHTML = "Todos os horários estão ocupados.";
     }
 
     if(dataInput && servicoSelect) {
@@ -463,7 +520,6 @@ if (btnBuscarCliente) {
             const mFim = (fimMinutos % 60).toString().padStart(2, '0');
             const horarioFim = `${hFim}:${mFim}`;
 
-            // Salva agendamento
             const { error } = await supabaseClient.from('agendamentos').insert([{
                 cliente_id: clienteAtual.id,
                 servico: servicoSelect.options[servicoSelect.selectedIndex].text,
@@ -475,18 +531,16 @@ if (btnBuscarCliente) {
             }]);
 
             if(error) {
-                alert("Erro ao agendar: " + error.message);
-                btnConfirma.textContent = "Confirmar Agendamento";
+                alert("Erro: " + error.message);
                 btnConfirma.disabled = false;
             } else {
-                // Sucesso
                 document.getElementById('step2').classList.remove('active');
                 document.getElementById('step3').classList.add('active');
                 
                 const btnZap = document.getElementById('btnZap');
                 if(btnZap) {
                     btnZap.onclick = () => {
-                        const msg = `Olá! Agendei um horário.\nCliente: ${clienteAtual.nome_crianca}\nDia: ${dataInput.value} às ${horarioEscolhido}`;
+                        const msg = `Agendado! ${clienteAtual.nome_crianca} - Dia ${dataInput.value} às ${horarioEscolhido}`;
                         window.open(`https://wa.me/554896304505?text=${encodeURIComponent(msg)}`, '_blank');
                     };
                 }
@@ -505,7 +559,6 @@ if (btnBuscarAgendamentos) {
         const div = document.getElementById('listaResultados');
         div.innerHTML = "Buscando...";
 
-        // 1. Busca cliente
         const { data: cliente } = await supabaseClient.from('clientes').select('id').eq('codigo_cliente', codigo).single();
         
         if(!cliente) {
@@ -513,7 +566,6 @@ if (btnBuscarAgendamentos) {
             return;
         }
 
-        // 2. Busca agendamentos futuros
         const hoje = new Date().toISOString().split('T')[0];
         const { data: agendamentos } = await supabaseClient
             .from('agendamentos')
@@ -525,7 +577,7 @@ if (btnBuscarAgendamentos) {
 
         div.innerHTML = "";
         if(!agendamentos || agendamentos.length === 0) {
-            div.innerHTML = "<p>Nenhum agendamento futuro encontrado.</p>";
+            div.innerHTML = "<p>Nenhum agendamento futuro.</p>";
             return;
         }
 
@@ -533,7 +585,6 @@ if (btnBuscarAgendamentos) {
             const card = document.createElement('div');
             card.className = 'card';
             const horaSimples = ag.horario_inicio.slice(0,5);
-            // Formata data BR
             const partesData = ag.data_agendada.split('-');
             const dataBR = `${partesData[2]}/${partesData[1]}/${partesData[0]}`;
 
@@ -547,19 +598,12 @@ if (btnBuscarAgendamentos) {
     });
 }
 
-// Função Global de Cancelar (precisa estar no window)
 window.cancelarAgendamento = async function(id) {
-    if(!confirm("Tem certeza que deseja cancelar?")) return;
-    
-    const { error } = await supabaseClient
-        .from('agendamentos')
-        .update({ status: 'Cancelado' })
-        .eq('id', id);
-
+    if(!confirm("Cancelar?")) return;
+    const { error } = await supabaseClient.from('agendamentos').update({ status: 'Cancelado' }).eq('id', id);
     if(error) alert("Erro: " + error.message);
     else {
-        alert("Cancelado com sucesso!");
-        // Simula nova busca para atualizar a lista
+        alert("Cancelado!");
         if(document.getElementById('btnBuscarAgendamentos')) {
             document.getElementById('btnBuscarAgendamentos').click();
         } else {

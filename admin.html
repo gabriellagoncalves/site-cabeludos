@@ -7,15 +7,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
         /* Login */
         #loginArea { text-align: center; margin-top: 50px; }
         input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin: 5px; }
         
         /* Menu de Abas */
-        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-        .tab { padding: 10px 20px; cursor: pointer; font-weight: bold; color: #555; }
+        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; overflow-x: auto;}
+        .tab { padding: 10px 20px; cursor: pointer; font-weight: bold; color: #555; white-space: nowrap; }
         .tab.active { border-bottom: 2px solid #007bff; color: #007bff; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -32,6 +32,15 @@
         
         .form-cadastro { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* Estilos dos Cards de Indicadores */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border: 1px solid #eee; }
+        .kpi-card h3 { margin: 0 0 10px 0; color: #777; font-size: 14px; text-transform: uppercase; }
+        .kpi-value { font-size: 24px; font-weight: bold; color: #333; }
+        .kpi-green { color: #28a745; }
+        .kpi-blue { color: #007bff; }
+        .kpi-red { color: #dc3545; }
     </style>
 </head>
 <body>
@@ -52,6 +61,7 @@
 
     <div class="tabs">
         <div class="tab active" onclick="abrirTab('agenda')">📅 Agenda</div>
+        <div class="tab" onclick="abrirTab('indicadores')">📊 Indicadores</div>
         <div class="tab" onclick="abrirTab('servicos')">✂️ Serviços</div>
         <div class="tab" onclick="abrirTab('profissionais')">💇‍♀️ Profissionais</div>
     </div>
@@ -63,6 +73,39 @@
             <input type="date" id="dataAgendaAdmin" onchange="carregarAgendaAdmin()">
         </div>
         <div id="listaAgendaAdmin">Carregando...</div>
+    </div>
+
+    <!-- ABA INDICADORES (NOVA) -->
+    <div id="indicadores" class="tab-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3>Visão Geral (Mês Atual)</h3>
+            <button class="btn btn-blue" onclick="carregarIndicadoresAdmin()">🔄 Atualizar</button>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3>Faturamento Estimado</h3>
+                <div id="kpiFaturamento" class="kpi-value kpi-green">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Agendamentos</h3>
+                <div id="kpiTotal" class="kpi-value kpi-blue">0</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Comparecimento</h3>
+                <div id="kpiComparecimento" class="kpi-value">0%</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Cancelados</h3>
+                <div id="kpiCancelados" class="kpi-value kpi-red">0</div>
+            </div>
+        </div>
+
+        <h3>Serviços Mais Populares</h3>
+        <table id="tabelaTopServicos">
+            <thead><tr><th>Serviço</th><th>Qtd.</th><th>Receita Est.</th></tr></thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <!-- ABA SERVIÇOS -->
