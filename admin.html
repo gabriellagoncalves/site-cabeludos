@@ -9,18 +9,15 @@
         body { font-family: sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
         .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* Login */
         #loginArea { text-align: center; margin-top: 50px; }
-        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin: 5px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin: 5px; }
         
-        /* Menu de Abas */
         .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; overflow-x: auto;}
         .tab { padding: 10px 20px; cursor: pointer; font-weight: bold; color: #555; white-space: nowrap; }
         .tab.active { border-bottom: 2px solid #007bff; color: #007bff; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Tabelas e Listas */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f8f9fa; }
@@ -33,7 +30,6 @@
         .form-cadastro { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-        /* Estilos dos Cards de Indicadores */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .kpi-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; border: 1px solid #eee; }
         .kpi-card h3 { margin: 0 0 10px 0; color: #777; font-size: 14px; text-transform: uppercase; }
@@ -71,11 +67,16 @@
         <div class="form-cadastro">
             <label>Filtrar por data:</label>
             <input type="date" id="dataAgendaAdmin" onchange="carregarAgendaAdmin()">
+            
+            <label style="margin-left: 15px;">Filtrar por Profissional:</label>
+            <select id="filtroProfissionalAgenda" onchange="carregarAgendaAdmin()">
+                <option value="">Todos os Profissionais</option>
+            </select>
         </div>
         <div id="listaAgendaAdmin">Carregando...</div>
     </div>
 
-    <!-- ABA INDICADORES (NOVA) -->
+    <!-- ABA INDICADORES -->
     <div id="indicadores" class="tab-content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3>Visão Geral (Mês Atual)</h3>

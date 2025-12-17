@@ -1,3 +1,4 @@
+
 // ============================================================
 // 1. CONFIGURAÇÃO E CONEXÃO COM O SUPABASE
 // ============================================================
@@ -22,6 +23,7 @@ function logarAdmin() {
         const inputData = document.getElementById('dataAgendaAdmin');
         if(inputData) {
             inputData.value = hoje;
+            carregarFiltroProfissionais(); // Carrega o filtro antes da agenda
             carregarAgendaAdmin();
             carregarServicosAdmin();
             carregarProfissionaisAdmin();
@@ -96,6 +98,7 @@ async function salvarProfissional() {
     else {
         alert("Profissional Salvo!");
         carregarProfissionaisAdmin();
+        carregarFiltroProfissionais(); // Atualiza o filtro da agenda também
         document.getElementById('nomeProf').value = "";
     }
 }
@@ -121,6 +124,24 @@ async function carregarProfissionaisAdmin() {
     }
 }
 
+async function carregarFiltroProfissionais() {
+    const select = document.getElementById('filtroProfissionalAgenda');
+    if (!select) return;
+
+    const { data } = await supabaseClient.from('profissionais').select('nome');
+    
+    // Mantém a opção "Todos" e adiciona os outros
+    select.innerHTML = '<option value="">Todos os Profissionais</option>';
+    if (data) {
+        data.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.nome;
+            opt.textContent = p.nome;
+            select.appendChild(opt);
+        });
+    }
+}
+
 // --- ADMIN: INDICADORES ---
 async function carregarIndicadoresAdmin() {
     const date = new Date();
@@ -129,7 +150,7 @@ async function carregarIndicadoresAdmin() {
 
     const { data: agendamentos } = await supabaseClient
         .from('agendamentos')
-        .select('status, servico, eh_gratis, valor_servico') // Agora pegamos o valor salvo
+        .select('status, servico, eh_gratis, valor_servico') 
         .gte('data_agendada', firstDay)
         .lte('data_agendada', lastDay);
 
@@ -147,7 +168,6 @@ async function carregarIndicadoresAdmin() {
         } else {
             if(ag.status === 'Compareceu') totalCompareceram++;
             
-            // Faturamento: Usa o valor salvo no agendamento ou 0 se for grátis
             if(!ag.eh_gratis && ag.status === 'Compareceu') {
                 faturamento += parseFloat(ag.valor_servico || 0);
             }
@@ -173,24 +193,36 @@ async function carregarIndicadoresAdmin() {
     });
 }
 
-// --- ADMIN: AGENDA ---
+// --- ADMIN: AGENDA (Com detalhes e Filtro) ---
 async function carregarAgendaAdmin() {
     const data = document.getElementById('dataAgendaAdmin').value;
+    const filtroProf = document.getElementById('filtroProfissionalAgenda')?.value || ""; // Captura o valor do filtro
     const div = document.getElementById('listaAgendaAdmin');
     div.innerHTML = "Carregando...";
 
-    const { data: agenda } = await supabaseClient
+    // Query Base
+    let query = supabaseClient
         .from('agendamentos')
-        .select(`*, clientes (nome_crianca, nome_responsavel)`)
+        .select(`
+            *,
+            clientes (nome_crianca, nome_responsavel, data_nascimento, observacoes, autoriza_foto)
+        `)
         .eq('data_agendada', data)
         .order('horario_inicio');
 
+    // Aplica o filtro se um profissional estiver selecionado
+    if (filtroProf) {
+        query = query.eq('profissional_nome', filtroProf);
+    }
+
+    const { data: agenda } = await query;
+
     if(!agenda || agenda.length === 0) {
-        div.innerHTML = "<p>Sem agendamentos para hoje.</p>";
+        div.innerHTML = "<p>Sem agendamentos para este filtro.</p>";
         return;
     }
 
-    let html = `<table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço/Prof.</th><th>Status</th><th>Ação</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Hora</th><th>Detalhes do Cliente</th><th>Serviço/Prof.</th><th>Status</th><th>Ação</th></tr></thead><tbody>`;
     
     agenda.forEach(item => {
         let corStatus = "#000";
@@ -198,13 +230,24 @@ async function carregarAgendaAdmin() {
         if(item.status === 'Compareceu') corStatus = "green";
         if(item.status === 'Faltou') corStatus = "red";
 
-        // Exibe o profissional responsável
         const profInfo = item.profissional_nome ? `<br><small>Prof: ${item.profissional_nome}</small>` : '';
+        
+        // Calcular Idade
+        const idade = calcularIdade(item.clientes?.data_nascimento);
+        const obs = item.clientes?.observacoes ? item.clientes.observacoes : "Nenhuma";
+        const foto = item.clientes?.autoriza_foto || "Não informado";
 
         html += `
             <tr>
-                <td>${item.horario_inicio.slice(0,5)}</td>
-                <td>${item.clientes?.nome_crianca} <small>(${item.clientes?.nome_responsavel})</small></td>
+                <td style="font-weight:bold; font-size:1.1em">${item.horario_inicio.slice(0,5)}</td>
+                <td>
+                    <strong>${item.clientes?.nome_crianca}</strong> <small>(${idade} anos)</small><br>
+                    <small>Resp: ${item.clientes?.nome_responsavel}</small><br>
+                    <div style="margin-top:5px; font-size:0.85em; color:#555;">
+                        📷 <strong>Foto:</strong> ${foto}<br>
+                        📝 <strong>Obs:</strong> <span style="color:red">${obs}</span>
+                    </div>
+                </td>
                 <td>${item.servico} ${profInfo}</td>
                 <td style="color:${corStatus}; font-weight:bold;">${item.status}</td>
                 <td>
@@ -218,6 +261,18 @@ async function carregarAgendaAdmin() {
     });
     html += `</tbody></table>`;
     div.innerHTML = html;
+}
+
+function calcularIdade(dataNascimento) {
+    if(!dataNascimento) return "?";
+    const hoje = new Date();
+    const nasc = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nasc.getFullYear();
+    const m = hoje.getMonth() - nasc.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) {
+        idade--;
+    }
+    return idade;
 }
 
 // Funções Globais Admin
@@ -319,7 +374,7 @@ if (btnBuscarCliente) {
                 opt.value = s.nome; 
                 opt.textContent = `${s.nome} - R$ ${s.valor} (${s.duracao_minutos} min)`;
                 opt.setAttribute('data-tempo', s.duracao_minutos);
-                opt.setAttribute('data-valor', s.valor); // Guardamos o valor aqui
+                opt.setAttribute('data-valor', s.valor); 
                 select.appendChild(opt);
             });
         } else {
@@ -369,7 +424,7 @@ if (btnBuscarCliente) {
         }
     });
 
-    // --- Carregar Horários com Validação de Passado ---
+    // --- Carregar Horários com Validação ---
     const dataInput = document.getElementById('dataInput');
     const servicoSelect = document.getElementById('servicoSelect');
     if(dataInput) dataInput.min = new Date().toISOString().split('T')[0];
@@ -384,20 +439,16 @@ if (btnBuscarCliente) {
 
         const duracao = parseInt(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo'));
 
-        // Validação de Data Passada (Hora)
-        // Pega a data atual do navegador
         const agora = new Date();
-        const dataHojeStr = agora.toLocaleDateString('pt-BR').split('/').reverse().join('-'); // YYYY-MM-DD local
+        const dataHojeStr = agora.toLocaleDateString('pt-BR').split('/').reverse().join('-'); 
         const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
         const isHoje = (dataStr === dataHojeStr);
 
-        // Descobre dia da semana
         const partesData = dataStr.split('-'); 
         const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
         const diasSemanaMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
         const diaSemanaTexto = diasSemanaMap[diaSemanaNum];
 
-        // Busca Profissionais do dia
         const { data: todosProfissionais } = await supabaseClient.from('profissionais').select('*');
         const profissionaisDoDia = todosProfissionais.filter(p => {
             if(!p.dias_trabalho) return true; 
@@ -409,7 +460,6 @@ if (btnBuscarCliente) {
             return;
         }
 
-        // Busca ocupados
         const { data: agendamentosOcupados } = await supabaseClient
             .from('agendamentos')
             .select('horario_inicio, horario_fim')
@@ -434,8 +484,6 @@ if (btnBuscarCliente) {
 
         for (let m = menorInicio; m <= maiorFim - duracao; m += 30) {
             
-            // BLOQUEIO DE HORÁRIO PASSADO
-            // Se for hoje e o horário do slot for menor que agora + 30min de margem
             if (isHoje && m < (minutosAgora + 30)) {
                 continue; 
             }
@@ -445,7 +493,6 @@ if (btnBuscarCliente) {
             const inicioSlotMinutos = m;
             const fimSlotMinutos = m + duracao;
             
-            // Capacidade do Slot
             let capacidadeTotalSlot = 0;
             profissionaisDoDia.forEach(p => {
                 const [phI, pmI] = p.horario_inicio.split(':').map(Number);
@@ -458,7 +505,6 @@ if (btnBuscarCliente) {
                 }
             });
 
-            // Ocupação do Slot
             let agendamentosColidindo = 0;
             agendamentosOcupados.forEach(a => {
                 const [ahI, amI] = a.horario_inicio.split(':').map(Number);
@@ -504,7 +550,6 @@ if (btnBuscarCliente) {
         document.getElementById('btnConfirmarAgendamento').disabled = false;
     }
 
-    // --- Confirmar Agendamento e Salvar Profissional ---
     const btnConfirma = document.getElementById('btnConfirmarAgendamento');
     if(btnConfirma) {
         btnConfirma.addEventListener('click', async () => {
@@ -519,35 +564,28 @@ if (btnBuscarCliente) {
             const mFim = (fimMinutos % 60).toString().padStart(2, '0');
             const horarioFim = `${hFim}:${mFim}`;
 
-            // Pega o valor do serviço selecionado
             const valorServico = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-valor'));
 
-            // Lógica para encontrar QUAL profissional pegar
-            // (Reexecuta a lógica simplificada para pegar o primeiro livre)
             const dataStr = dataInput.value;
             const partesData = dataStr.split('-'); 
             const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
             const diasSemanaMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
             const diaTexto = diasSemanaMap[diaSemanaNum];
 
-            // Busca profissionais
             const { data: pros } = await supabaseClient.from('profissionais').select('*');
             const prosDoDia = pros.filter(p => !p.dias_trabalho || p.dias_trabalho.includes(diaTexto));
 
-            // Busca ocupados naquele horário exato
             const { data: ocupados } = await supabaseClient
                 .from('agendamentos')
-                .select('profissional_nome') // Assumindo que salvaremos o nome
+                .select('profissional_nome') 
                 .eq('data_agendada', dataStr)
                 .eq('horario_inicio', horarioEscolhido)
                 .neq('status', 'Cancelado');
             
             const nomesOcupados = ocupados.map(o => o.profissional_nome);
 
-            // Encontra o primeiro profissional que não está na lista de ocupados
             let profissionalEscolhido = "Equipe";
             for (let p of prosDoDia) {
-                // Verifica se o horário do profissional comporta o agendamento
                 const [phI, pmI] = p.horario_inicio.split(':').map(Number);
                 const [phF, pmF] = p.horario_fim.split(':').map(Number);
                 const pInicio = phI * 60 + pmI;
@@ -557,7 +595,6 @@ if (btnBuscarCliente) {
                 const slotFim = fimMinutos;
 
                 if (pInicio <= slotInicio && pFim >= slotFim) {
-                    // Verifica se ele já está ocupado
                     if (!nomesOcupados.includes(p.nome)) {
                         profissionalEscolhido = p.nome;
                         break;
@@ -573,8 +610,8 @@ if (btnBuscarCliente) {
                 horario_fim: horarioFim,
                 eh_gratis: clienteAtual.isGratisAgora,
                 status: 'Agendado',
-                valor_servico: valorServico,       // Salva Valor
-                profissional_nome: profissionalEscolhido // Salva Profissional
+                valor_servico: valorServico,
+                profissional_nome: profissionalEscolhido
             }]);
 
             if(error) {

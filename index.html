@@ -14,11 +14,31 @@
         .btn-rosa { background-color: #ff69b4; } 
         .btn-laranja { background-color: #ff9a44; } 
         .btn-verde { background-color: #25d366; } 
+
+        /* Botão Admin */
+        .btn-admin {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            font-size: 24px;
+            color: #ccc;
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+            background: white;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .btn-admin:hover { opacity: 1; color: #555; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Imagem da Logo -->
         <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Cabeludos & Cia" class="logo-img">
         
         <a href="cadastro.html" class="btn btn-azul">
@@ -37,5 +57,8 @@
             💬 Fale conosco<br><small>WhatsApp</small>
         </a>
     </div>
+
+    <!-- Botão de Engrenagem (Link para Admin) -->
+    <a href="admin.html" class="btn-admin">⚙️</a>
 </body>
 </html>
