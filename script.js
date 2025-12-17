@@ -128,19 +128,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Erro busca:", error);
                     showToast("Cliente não encontrado! Verifique o código.", 'error');
                 } else {
-                    // Sucesso! Salva estado e avança
-                    window.agendamentoEstado.cliente = data;
-                    
-                    document.getElementById('step1').classList.remove('active');
-                    document.getElementById('step2').classList.add('active'); 
-                    document.getElementById('step2').style.display = 'block';
-                    document.getElementById('step1').style.display = 'none';
+    // Sucesso! Salva estado e avança
+    window.agendamentoEstado.cliente = data;
+    
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step1').style.display = 'none'; // Oculta o passo 1
+    
+    // CORREÇÃO AQUI:
+    document.getElementById('step2').classList.remove('hidden'); // <--- ADICIONE ESTA LINHA
+    document.getElementById('step2').classList.add('active'); 
+    document.getElementById('step2').style.display = 'block';
 
-                    document.getElementById('infoCliente').innerHTML = `
-                        <div style="text-align:center;">
-                            <strong>Olá, ${data.nome_responsavel}!</strong><br>
-                            Atendimento para: <strong>${data.nome_crianca}</strong>
-                        </div>`;
+    document.getElementById('infoCliente').innerHTML = `
+        <div style="text-align:center;">
+            <strong>Olá, ${data.nome_responsavel}!</strong><br>
+            Atendimento para: <strong>${data.nome_crianca}</strong>
+        </div>`;
                     
                     // Verifica Fidelidade
                     const cortes = data.saldo_fidelidade || 0;
