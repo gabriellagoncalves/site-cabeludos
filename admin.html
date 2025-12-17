@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Cabeludos & Cia</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* Login */
+        #loginArea { text-align: center; margin-top: 50px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin: 5px; }
+        
+        /* Menu de Abas */
+        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; font-weight: bold; color: #555; }
+        .tab.active { border-bottom: 2px solid #007bff; color: #007bff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Tabelas e Listas */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        
+        .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-blue { background-color: #007bff; }
+        .btn-green { background-color: #28a745; }
+        .btn-red { background-color: #dc3545; }
+        
+        .form-cadastro { background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- 1. TELA DE LOGIN -->
+<div id="loginArea">
+    <h2>🔒 Área Restrita</h2>
+    <input type="password" id="senhaAdmin" placeholder="Digite a senha">
+    <button class="btn btn-blue" onclick="logarAdmin()">Entrar</button>
+</div>
+
+<!-- 2. PAINEL PRINCIPAL -->
+<div id="painelAdmin" class="container" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>⚙️ Gestão Cabeludos & Cia</h2>
+        <button class="btn btn-red" onclick="location.reload()">Sair</button>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="abrirTab('agenda')">📅 Agenda</div>
+        <div class="tab" onclick="abrirTab('servicos')">✂️ Serviços</div>
+        <div class="tab" onclick="abrirTab('profissionais')">💇‍♀️ Profissionais</div>
+    </div>
+
+    <!-- ABA AGENDA -->
+    <div id="agenda" class="tab-content active">
+        <div class="form-cadastro">
+            <label>Filtrar por data:</label>
+            <input type="date" id="dataAgendaAdmin" onchange="carregarAgendaAdmin()">
+        </div>
+        <div id="listaAgendaAdmin">Carregando...</div>
+    </div>
+
+    <!-- ABA SERVIÇOS -->
+    <div id="servicos" class="tab-content">
+        <h3>Cadastrar Serviço</h3>
+        <div class="form-cadastro grid-form">
+            <input type="text" id="nomeServico" placeholder="Nome do Serviço">
+            <input type="number" id="valorServico" placeholder="Valor (R$)">
+            <input type="number" id="tempoServico" placeholder="Tempo (minutos)">
+            <button class="btn btn-green" onclick="salvarServico()">Salvar Serviço</button>
+        </div>
+        <h3>Lista de Serviços</h3>
+        <table id="tabelaServicos">
+            <thead><tr><th>Nome</th><th>Valor</th><th>Tempo</th><th>Ação</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- ABA PROFISSIONAIS -->
+    <div id="profissionais" class="tab-content">
+        <h3>Cadastrar Profissional</h3>
+        <div class="form-cadastro grid-form">
+            <input type="text" id="nomeProf" placeholder="Nome">
+            <input type="text" id="diasProf" placeholder="Dias (Ex: Seg,Ter)">
+            <input type="time" id="inicioProf" placeholder="Início">
+            <input type="time" id="fimProf" placeholder="Fim">
+            <button class="btn btn-green" onclick="salvarProfissional()">Salvar Profissional</button>
+        </div>
+        <h3>Equipe</h3>
+        <table id="tabelaProfissionais">
+            <thead><tr><th>Nome</th><th>Horário</th><th>Dias</th><th>Ação</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
