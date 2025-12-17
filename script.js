@@ -25,7 +25,7 @@ function logarAdmin() {
             carregarAgendaAdmin();
             carregarServicosAdmin();
             carregarProfissionaisAdmin();
-            carregarIndicadoresAdmin(); // <-- NOVO: Carrega os indicadores ao logar
+            carregarIndicadoresAdmin();
         }
     } else {
         alert("Senha incorreta!");
@@ -82,7 +82,7 @@ async function carregarServicosAdmin() {
 // --- ADMIN: PROFISSIONAIS ---
 async function salvarProfissional() {
     const nome = document.getElementById('nomeProf').value;
-    const dias = document.getElementById('diasProf').value; // Ex: Seg,Ter,Qua
+    const dias = document.getElementById('diasProf').value; 
     const inicio = document.getElementById('inicioProf').value;
     const fim = document.getElementById('fimProf').value;
 
@@ -123,30 +123,18 @@ async function carregarProfissionaisAdmin() {
 
 // --- ADMIN: INDICADORES ---
 async function carregarIndicadoresAdmin() {
-    // 1. Definir intervalo do mês atual
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
 
-    // 2. Buscar agendamentos do mês
     const { data: agendamentos } = await supabaseClient
         .from('agendamentos')
-        .select('status, servico, eh_gratis')
+        .select('status, servico, eh_gratis, valor_servico') // Agora pegamos o valor salvo
         .gte('data_agendada', firstDay)
         .lte('data_agendada', lastDay);
 
-    // 3. Buscar Serviços (para saber os preços)
-    const { data: servicos } = await supabaseClient.from('servicos').select('nome, valor');
-    
-    // Mapa de preços (Ex: {"Corte Menino": 30, ...})
-    const precos = {};
-    if(servicos) {
-        servicos.forEach(s => precos[s.nome] = parseFloat(s.valor));
-    }
-
     if(!agendamentos) return;
 
-    // 4. Calcular Métricas
     let totalAgendamentos = agendamentos.length;
     let totalCancelados = 0;
     let totalCompareceram = 0;
@@ -157,40 +145,30 @@ async function carregarIndicadoresAdmin() {
         if(ag.status === 'Cancelado') {
             totalCancelados++;
         } else {
-            // Conta comparecimentos para taxa, mas considera agendados futuros no total
             if(ag.status === 'Compareceu') totalCompareceram++;
             
-            // Faturamento (apenas se não for grátis e não cancelado)
+            // Faturamento: Usa o valor salvo no agendamento ou 0 se for grátis
             if(!ag.eh_gratis && ag.status === 'Compareceu') {
-                const valor = precos[ag.servico] || 0;
-                faturamento += valor;
+                faturamento += parseFloat(ag.valor_servico || 0);
             }
 
-            // Top Serviços (conta todos não cancelados)
             servicosCount[ag.servico] = (servicosCount[ag.servico] || 0) + 1;
         }
     });
 
-    const taxaComparecimento = totalAgendamentos > 0 ? ((totalCompareceram / (totalAgendamentos - (totalAgendamentos - totalCancelados - totalCompareceram))) * 100).toFixed(0) : 0;
-    // Nota: Cálculo de taxa simplificado. Idealmente seria Compareceram / (Compareceram + Faltaram).
-
-    // 5. Atualizar Tela
     document.getElementById('kpiFaturamento').textContent = faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('kpiTotal').textContent = totalAgendamentos;
     document.getElementById('kpiCancelados').textContent = totalCancelados;
+    document.getElementById('kpiComparecimento').textContent = totalAgendamentos > 0 ? ((totalCompareceram / (totalAgendamentos - totalCancelados)) * 100).toFixed(0) + "%" : "0%";
     
-    // Tabela Top Serviços
     const tbody = document.querySelector('#tabelaTopServicos tbody');
     tbody.innerHTML = "";
     
-    // Ordenar serviços mais populares
     const sortedServicos = Object.entries(servicosCount).sort((a,b) => b[1] - a[1]);
     
     sortedServicos.forEach(([nome, qtd]) => {
-        const valorUnit = precos[nome] || 0;
-        const totalEst = valorUnit * qtd;
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${nome}</td><td>${qtd}</td><td>${totalEst.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
+        tr.innerHTML = `<td>${nome}</td><td>${qtd}</td><td>-</td>`;
         tbody.appendChild(tr);
     });
 }
@@ -212,7 +190,7 @@ async function carregarAgendaAdmin() {
         return;
     }
 
-    let html = `<table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço</th><th>Status</th><th>Ação</th></tr></thead><tbody>`;
+    let html = `<table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço/Prof.</th><th>Status</th><th>Ação</th></tr></thead><tbody>`;
     
     agenda.forEach(item => {
         let corStatus = "#000";
@@ -220,16 +198,19 @@ async function carregarAgendaAdmin() {
         if(item.status === 'Compareceu') corStatus = "green";
         if(item.status === 'Faltou') corStatus = "red";
 
+        // Exibe o profissional responsável
+        const profInfo = item.profissional_nome ? `<br><small>Prof: ${item.profissional_nome}</small>` : '';
+
         html += `
             <tr>
                 <td>${item.horario_inicio.slice(0,5)}</td>
                 <td>${item.clientes?.nome_crianca} <small>(${item.clientes?.nome_responsavel})</small></td>
-                <td>${item.servico}</td>
+                <td>${item.servico} ${profInfo}</td>
                 <td style="color:${corStatus}; font-weight:bold;">${item.status}</td>
                 <td>
                     ${item.status === 'Agendado' ? `
-                    <button class="btn btn-green" onclick="marcarComparecimento('${item.id}', '${item.cliente_id}')">✅ Compareceu</button>
-                    <button class="btn btn-red" onclick="marcarFalta('${item.id}')">❌ Faltou</button>
+                    <button class="btn btn-green" onclick="marcarComparecimento('${item.id}', '${item.cliente_id}')">✅</button>
+                    <button class="btn btn-red" onclick="marcarFalta('${item.id}')">❌</button>
                     ` : '-'}
                 </td>
             </tr>
@@ -241,7 +222,7 @@ async function carregarAgendaAdmin() {
 
 // Funções Globais Admin
 window.marcarComparecimento = async function(idAgendamento, idCliente) {
-    if(!confirm("Confirmar presença e adicionar ponto de fidelidade?")) return;
+    if(!confirm("Confirmar presença? (Adiciona ponto de fidelidade)")) return;
 
     const { error: err1 } = await supabaseClient.from('agendamentos').update({ status: 'Compareceu' }).eq('id', idAgendamento);
     if(err1) return alert("Erro: " + err1.message);
@@ -252,7 +233,7 @@ window.marcarComparecimento = async function(idAgendamento, idCliente) {
 
     alert("Confirmado!");
     carregarAgendaAdmin();
-    carregarIndicadoresAdmin(); // Atualiza indicadores também
+    carregarIndicadoresAdmin();
 };
 
 window.marcarFalta = async function(idAgendamento) {
@@ -271,7 +252,7 @@ window.deletarItem = async function(tabela, id) {
 
 
 // ============================================================
-// 3. LÓGICA DE CADASTRO (cadastro.html)
+// 3. LÓGICA DE CADASTRO
 // ============================================================
 const formCadastro = document.getElementById('formCadastro');
 if (formCadastro) {
@@ -318,14 +299,14 @@ if (formCadastro) {
 }
 
 // ============================================================
-// 4. LÓGICA DE AGENDAMENTO INTELIGENTE (agendar.html)
+// 4. LÓGICA DE AGENDAMENTO
 // ============================================================
 const btnBuscarCliente = document.getElementById('btnBuscarCliente');
 let clienteAtual = null;
 
 if (btnBuscarCliente) {
     
-    // --- Carregar Serviços ---
+    // --- Carregar Serviços com Preço ---
     window.addEventListener('load', async () => {
         const select = document.getElementById('servicoSelect');
         if(!select) return;
@@ -338,6 +319,7 @@ if (btnBuscarCliente) {
                 opt.value = s.nome; 
                 opt.textContent = `${s.nome} - R$ ${s.valor} (${s.duracao_minutos} min)`;
                 opt.setAttribute('data-tempo', s.duracao_minutos);
+                opt.setAttribute('data-valor', s.valor); // Guardamos o valor aqui
                 select.appendChild(opt);
             });
         } else {
@@ -345,7 +327,6 @@ if (btnBuscarCliente) {
         }
     });
 
-    // --- Buscar Cliente ---
     btnBuscarCliente.addEventListener('click', async () => {
         const codigo = document.getElementById('idClienteInput').value.trim();
         if(!codigo) return alert("Digite o código.");
@@ -388,7 +369,7 @@ if (btnBuscarCliente) {
         }
     });
 
-    // --- Carregar Horários com base nos Profissionais ---
+    // --- Carregar Horários com Validação de Passado ---
     const dataInput = document.getElementById('dataInput');
     const servicoSelect = document.getElementById('servicoSelect');
     if(dataInput) dataInput.min = new Date().toISOString().split('T')[0];
@@ -403,13 +384,21 @@ if (btnBuscarCliente) {
 
         const duracao = parseInt(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo'));
 
+        // Validação de Data Passada (Hora)
+        // Pega a data atual do navegador
+        const agora = new Date();
+        const dataHojeStr = agora.toLocaleDateString('pt-BR').split('/').reverse().join('-'); // YYYY-MM-DD local
+        const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+        const isHoje = (dataStr === dataHojeStr);
+
+        // Descobre dia da semana
         const partesData = dataStr.split('-'); 
         const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
         const diasSemanaMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
         const diaSemanaTexto = diasSemanaMap[diaSemanaNum];
 
+        // Busca Profissionais do dia
         const { data: todosProfissionais } = await supabaseClient.from('profissionais').select('*');
-        
         const profissionaisDoDia = todosProfissionais.filter(p => {
             if(!p.dias_trabalho) return true; 
             return p.dias_trabalho.includes(diaSemanaTexto);
@@ -420,6 +409,7 @@ if (btnBuscarCliente) {
             return;
         }
 
+        // Busca ocupados
         const { data: agendamentosOcupados } = await supabaseClient
             .from('agendamentos')
             .select('horario_inicio, horario_fim')
@@ -431,23 +421,31 @@ if (btnBuscarCliente) {
 
         profissionaisDoDia.forEach(p => {
             const [hI, mI] = p.horario_inicio.split(':').map(Number);
-            const minutosInicio = hI * 60 + mI;
-            if(minutosInicio < menorInicio) menorInicio = minutosInicio;
+            const minInicio = hI * 60 + mI;
+            if(minInicio < menorInicio) menorInicio = minInicio;
 
             const [hF, mF] = p.horario_fim.split(':').map(Number);
-            const minutosFim = hF * 60 + mF;
-            if(minutosFim > maiorFim) maiorFim = minutosFim;
+            const minFim = hF * 60 + mF;
+            if(minFim > maiorFim) maiorFim = minFim;
         });
 
         lista.innerHTML = "";
         let temHorario = false;
 
         for (let m = menorInicio; m <= maiorFim - duracao; m += 30) {
+            
+            // BLOQUEIO DE HORÁRIO PASSADO
+            // Se for hoje e o horário do slot for menor que agora + 30min de margem
+            if (isHoje && m < (minutosAgora + 30)) {
+                continue; 
+            }
+
             const hAtual = Math.floor(m / 60);
             const mAtual = m % 60;
             const inicioSlotMinutos = m;
             const fimSlotMinutos = m + duracao;
             
+            // Capacidade do Slot
             let capacidadeTotalSlot = 0;
             profissionaisDoDia.forEach(p => {
                 const [phI, pmI] = p.horario_inicio.split(':').map(Number);
@@ -460,6 +458,7 @@ if (btnBuscarCliente) {
                 }
             });
 
+            // Ocupação do Slot
             let agendamentosColidindo = 0;
             agendamentosOcupados.forEach(a => {
                 const [ahI, amI] = a.horario_inicio.split(':').map(Number);
@@ -486,7 +485,7 @@ if (btnBuscarCliente) {
             }
         }
 
-        if(!temHorario) lista.innerHTML = "Todos os horários estão ocupados.";
+        if(!temHorario) lista.innerHTML = "Sem horários disponíveis.";
     }
 
     if(dataInput && servicoSelect) {
@@ -505,7 +504,7 @@ if (btnBuscarCliente) {
         document.getElementById('btnConfirmarAgendamento').disabled = false;
     }
 
-    // --- Confirmar Agendamento ---
+    // --- Confirmar Agendamento e Salvar Profissional ---
     const btnConfirma = document.getElementById('btnConfirmarAgendamento');
     if(btnConfirma) {
         btnConfirma.addEventListener('click', async () => {
@@ -520,6 +519,52 @@ if (btnBuscarCliente) {
             const mFim = (fimMinutos % 60).toString().padStart(2, '0');
             const horarioFim = `${hFim}:${mFim}`;
 
+            // Pega o valor do serviço selecionado
+            const valorServico = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-valor'));
+
+            // Lógica para encontrar QUAL profissional pegar
+            // (Reexecuta a lógica simplificada para pegar o primeiro livre)
+            const dataStr = dataInput.value;
+            const partesData = dataStr.split('-'); 
+            const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
+            const diasSemanaMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+            const diaTexto = diasSemanaMap[diaSemanaNum];
+
+            // Busca profissionais
+            const { data: pros } = await supabaseClient.from('profissionais').select('*');
+            const prosDoDia = pros.filter(p => !p.dias_trabalho || p.dias_trabalho.includes(diaTexto));
+
+            // Busca ocupados naquele horário exato
+            const { data: ocupados } = await supabaseClient
+                .from('agendamentos')
+                .select('profissional_nome') // Assumindo que salvaremos o nome
+                .eq('data_agendada', dataStr)
+                .eq('horario_inicio', horarioEscolhido)
+                .neq('status', 'Cancelado');
+            
+            const nomesOcupados = ocupados.map(o => o.profissional_nome);
+
+            // Encontra o primeiro profissional que não está na lista de ocupados
+            let profissionalEscolhido = "Equipe";
+            for (let p of prosDoDia) {
+                // Verifica se o horário do profissional comporta o agendamento
+                const [phI, pmI] = p.horario_inicio.split(':').map(Number);
+                const [phF, pmF] = p.horario_fim.split(':').map(Number);
+                const pInicio = phI * 60 + pmI;
+                const pFim = phF * 60 + pmF;
+                
+                const slotInicio = h * 60 + m;
+                const slotFim = fimMinutos;
+
+                if (pInicio <= slotInicio && pFim >= slotFim) {
+                    // Verifica se ele já está ocupado
+                    if (!nomesOcupados.includes(p.nome)) {
+                        profissionalEscolhido = p.nome;
+                        break;
+                    }
+                }
+            }
+
             const { error } = await supabaseClient.from('agendamentos').insert([{
                 cliente_id: clienteAtual.id,
                 servico: servicoSelect.options[servicoSelect.selectedIndex].text,
@@ -527,7 +572,9 @@ if (btnBuscarCliente) {
                 horario_inicio: horarioEscolhido,
                 horario_fim: horarioFim,
                 eh_gratis: clienteAtual.isGratisAgora,
-                status: 'Agendado'
+                status: 'Agendado',
+                valor_servico: valorServico,       // Salva Valor
+                profissional_nome: profissionalEscolhido // Salva Profissional
             }]);
 
             if(error) {
@@ -540,7 +587,7 @@ if (btnBuscarCliente) {
                 const btnZap = document.getElementById('btnZap');
                 if(btnZap) {
                     btnZap.onclick = () => {
-                        const msg = `Agendado! ${clienteAtual.nome_crianca} - Dia ${dataInput.value} às ${horarioEscolhido}`;
+                        const msg = `Agendado! ${clienteAtual.nome_crianca} - Dia ${dataInput.value} às ${horarioEscolhido} com ${profissionalEscolhido}`;
                         window.open(`https://wa.me/554896304505?text=${encodeURIComponent(msg)}`, '_blank');
                     };
                 }
@@ -550,7 +597,7 @@ if (btnBuscarCliente) {
 }
 
 // ============================================================
-// 5. LÓGICA DE GERENCIAR (gerenciar.html)
+// 5. LÓGICA DE GERENCIAR
 // ============================================================
 const btnBuscarAgendamentos = document.getElementById('btnBuscarAgendamentos');
 if (btnBuscarAgendamentos) {
