@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro</title>
+    <!-- Importando o Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #e0f7fa; padding: 20px; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .logo-img { display: block; margin: 0 auto 20px auto; max-width: 150px; border-radius: 10px; }
+        label { display: block; margin-top: 10px; font-weight: bold; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #4facfe; color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; margin-top: 20px; font-size: 16px; cursor: pointer; }
+        .hidden { display: none; }
+        .sucesso { background: #d4edda; color: #155724; padding: 20px; border-radius: 5px; text-align: center; }
+        .codigo-destaque { font-size: 24px; font-weight: bold; color: #007bff; margin: 10px 0; display: block; background: #fff; padding: 10px; border: 2px dashed #007bff; }
+    </style>
+</head>
+<body>
+
+<div class="box" id="formBox">
+    <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Logo" class="logo-img">
+    <h2 style="color: #007bff; text-align: center;">Novo Cadastro</h2>
+    
+    <form id="formCadastro">
+        <label>Nome do Responsável:</label>
+        <input type="text" id="responsavel" required>
+        
+        <label>Telefone/WhatsApp:</label>
+        <input type="tel" id="telefone" required>
+        
+        <label>E-mail (Opcional):</label>
+        <input type="email" id="email">
+        
+        <label>Instagram (Opcional):</label>
+        <input type="text" id="instagram">
+        
+        <hr>
+        <label>Nome da Criança:</label>
+        <input type="text" id="crianca" required>
+        
+        <label>Data de Nascimento:</label>
+        <input type="date" id="nascimento" required>
+        
+        <label>Observação:</label>
+        <textarea id="obs" rows="3"></textarea>
+        
+        <label>Origem:</label>
+        <select id="origem">
+            <option>Indicação</option>
+            <option>Instagram</option>
+            <option>Facebook</option>
+            <option>Outro</option>
+        </select>
+        
+        <label>Autoriza fotos?</label>
+        <select id="foto">
+            <option value="Sim">Sim</option>
+            <option value="Nao">Não</option>
+        </select>
+        
+        <button type="submit" id="btnSalvar">Salvar Cadastro</button>
+    </form>
+</div>
+
+<div class="box hidden" id="sucessoBox">
+    <div class="sucesso">
+        <h3>Cadastro realizado! 🎉</h3>
+        <p>Seu código é:</p>
+        <span id="codigoGerado" class="codigo-destaque"></span>
+        <p>Tire um print desta tela!</p>
+        <br>
+        <a href="index.html" style="color: #007bff;">Voltar ao Menu</a>
+    </div>
+</div>
+
+<!-- Lógica do Site -->
+<script src="script.js"></script>
+</body>
+</html>

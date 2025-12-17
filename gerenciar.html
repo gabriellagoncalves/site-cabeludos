@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar</title>
+    <!-- Importando o Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #fff8e1; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 15px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .logo-img { display: block; margin: 0 auto 20px auto; max-width: 150px; border-radius: 10px; }
+        h2 { color: #ff9a44; text-align: center; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn-busca { background: #ff9a44; color: white; width: 100%; padding: 12px; border: none; border-radius: 5px; margin-top: 15px; cursor: pointer; }
+        .card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-top: 15px; background: #fafafa; }
+        .btn-cancelar { background: #dc3545; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Logo" class="logo-img">
+    <h2>🔄 Meus Agendamentos</h2>
+    
+    <label>Código do Cliente:</label>
+    <input type="text" id="idClienteBusca" placeholder="Ex: 2025-15-123">
+    <button class="btn-busca" id="btnBuscarAgendamentos">Buscar Agendamentos</button>
+    
+    <div id="listaResultados"></div>
+    
+    <br>
+    <div style="text-align:center;"><a href="index.html" style="color: #ff9a44;">Voltar ao Menu</a></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

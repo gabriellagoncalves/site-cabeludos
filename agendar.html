@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar</title>
+    <!-- Importando o Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #fff0f5; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 15px; max-width: 500px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .logo-img { display: block; margin: 0 auto 20px auto; max-width: 150px; border-radius: 10px; }
+        .step { display: none; }
+        .step.active { display: block; }
+        h2 { color: #ff69b4; text-align: center; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn-next { background: #ff69b4; color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; margin-top: 20px; font-size: 16px; cursor: pointer; }
+        .btn-next:disabled { background: #ccc; }
+        .slot-btn { background: white; border: 1px solid #ff69b4; color: #ff69b4; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .slot-btn.selected { background: #ff69b4; color: white; }
+        .fidelidade-box { background: #fff8e1; border: 2px dashed #ffc107; padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://i.imgur.com/3ncoKH0.jpeg" alt="Logo" class="logo-img">
+    
+    <!-- Passo 1: Identificação -->
+    <div id="step1" class="step active">
+        <h2>🔐 Identificação</h2>
+        <label>Código do Cliente:</label>
+        <input type="text" id="idClienteInput" placeholder="Ex: 2025-15-123">
+        <button class="btn-next" id="btnBuscarCliente">Buscar Cadastro</button>
+    </div>
+
+    <!-- Passo 2: Agendamento -->
+    <div id="step2" class="step">
+        <h2>✂️ Escolha o Serviço</h2>
+        <div id="infoCliente" style="background:#e6ffe6; padding:10px; border-radius:8px; text-align:center;"></div>
+        
+        <div id="fidelidadeArea" class="fidelidade-box"></div>
+
+        <label>Serviço:</label>
+        <select id="servicoSelect">
+            <option value="">Selecione...</option>
+            <!-- Atenção: data-tempo é a duração em minutos -->
+            <option value="corte_menino" data-tempo="30">Corte Menino (30 min)</option>
+            <option value="corte_menina" data-tempo="30">Corte Menina (30 min)</option>
+            <option value="princesa" data-tempo="60">Dia de Princesa (1h)</option>
+        </select>
+        
+        <label>Data:</label>
+        <input type="date" id="dataInput">
+        
+        <label>Horários Disponíveis:</label>
+        <div id="listaHorarios" style="text-align:center; padding:10px; border:1px solid #eee; border-radius:5px;">
+            Selecione serviço e data...
+        </div>
+        
+        <button class="btn-next" id="btnConfirmarAgendamento" disabled>Confirmar Agendamento</button>
+    </div>
+
+    <!-- Passo 3: Sucesso -->
+    <div id="step3" class="step" style="text-align: center;">
+        <h1>✨</h1>
+        <h2 style="color: #25d366;">Agendado com Sucesso!</h2>
+        <p>Estamos te esperando!</p>
+        <button id="btnZap" class="btn-next" style="background-color:#25d366;">Enviar no WhatsApp 💬</button>
+        <br><br>
+        <a href="index.html" style="color: #ff69b4;">Voltar ao início</a>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
