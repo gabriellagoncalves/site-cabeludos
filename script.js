@@ -9,7 +9,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Inicializa a variável do cliente
 let supabaseClient;
 
-// Tenta conectar imediatamente para garantir disponibilidade
+// Tenta conectar imediatamente
 try {
     if (typeof supabase !== 'undefined') {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -35,7 +35,6 @@ window.showToast = function(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     
-    // Ícones simples baseados no tipo
     let iconClass = 'fa-circle-info';
     if(type === 'success') iconClass = 'fa-circle-check';
     if(type === 'error') iconClass = 'fa-circle-exclamation';
@@ -64,7 +63,7 @@ window.setLoading = function(btnId, isLoading, text = "Aguarde...") {
 };
 
 // ============================================================
-// 3. LÓGICA DE ADMINISTRAÇÃO (GLOBAIS PARA ONCLICK)
+// 3. LÓGICA DE ADMINISTRAÇÃO (GLOBAIS)
 // ============================================================
 
 window.logarAdmin = function() {
@@ -73,9 +72,11 @@ window.logarAdmin = function() {
     
     if (senhaInput.value === "admin123") {
         document.getElementById('loginArea').style.display = 'none';
+        
         const painel = document.getElementById('painelAdmin');
-        painel.classList.remove('hidden');
-        painel.style.display = 'block';
+        painel.classList.remove('hidden'); // Remove a classe que bloqueia
+        painel.style.display = 'block';    // Garante visibilidade
+        
         window.initAdmin();
     } else {
         window.showToast("Senha incorreta!", 'error');
@@ -83,18 +84,17 @@ window.logarAdmin = function() {
 };
 
 window.initAdmin = function() {
-    // Define data de hoje
     const hoje = new Date().toISOString().split('T')[0];
     const inputDate = document.getElementById('dataAgendaAdmin');
     if (inputDate) inputDate.value = hoje;
     
-    // Carrega dados iniciais
-    window.carregarAgendaAdmin();
-    window.carregarServicosAdmin();
-    window.carregarProfissionaisAdmin();
-    window.carregarIndicadoresAdmin();
-    window.carregarFiltroProfissionais();
-    window.carregarClientesAdmin();
+    // Carrega tudo
+    if(window.carregarAgendaAdmin) window.carregarAgendaAdmin();
+    if(window.carregarServicosAdmin) window.carregarServicosAdmin();
+    if(window.carregarProfissionaisAdmin) window.carregarProfissionaisAdmin();
+    if(window.carregarIndicadoresAdmin) window.carregarIndicadoresAdmin();
+    if(window.carregarFiltroProfissionais) window.carregarFiltroProfissionais();
+    if(window.carregarClientesAdmin) window.carregarClientesAdmin();
 };
 
 window.abrirTab = function(tabName) {
@@ -193,31 +193,50 @@ window.carregarFiltroProfissionais = async function() {
     }
 };
 
+// --- CORREÇÃO DA ABA CLIENTES (Origem e Lista) ---
 window.carregarClientesAdmin = async function() {
     const termoResp = document.getElementById('buscaResponsavel')?.value.toLowerCase() || "";
     const termoCrianca = document.getElementById('buscaCrianca')?.value.toLowerCase() || "";
-    const tbody = document.querySelector('#tabelaClientes tbody');
     
-    if (!tbody) return;
+    // Busca todos os clientes
+    let { data: clientes, error } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
+    
+    if (error) return console.error(error);
+    if (!clientes) clientes = [];
 
-    // Busca todos (para KPIs e filtro local)
-    let { data: clientes } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
-    
-    if (clientes) {
-        // Atualiza KPIs apenas se não houver filtro ativo
-        if (!termoResp && !termoCrianca) {
-            const elTotal = document.getElementById('kpiTotalClientes');
-            if (elTotal) elTotal.innerText = clientes.length;
-            
-            // Origem KPI
+    // 1. Atualizar KPI de Origem (Independente da tabela)
+    const elLista = document.getElementById('kpiOrigemList');
+    if (elLista && !termoResp && !termoCrianca) {
+        const elTotal = document.getElementById('kpiTotalClientes');
+        if (elTotal) elTotal.innerText = clientes.length;
+        
+        if (clientes.length === 0) {
+            elLista.innerHTML = "Nenhum dado ainda.";
+        } else {
             const origensCount = {};
             clientes.forEach(c => { 
                 const o = c.origem || 'Não informado'; 
                 origensCount[o] = (origensCount[o] || 0) + 1; 
             });
-            // (Logica de renderizar lista de origem omitida para brevidade, mas funcionaria aqui)
+            
+            let htmlOrigens = '<ul class="origin-list">';
+            Object.entries(origensCount)
+                .sort((a,b) => b[1] - a[1])
+                .forEach(([nome, qtd]) => {
+                    const pct = ((qtd/clientes.length)*100).toFixed(0);
+                    htmlOrigens += `<li class="origin-item" style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
+                        <span>${nome} <small>(${qtd})</small></span> 
+                        <span style="font-weight:bold; color:var(--secondary);">${pct}%</span>
+                    </li>`;
+                });
+            htmlOrigens += '</ul>';
+            elLista.innerHTML = htmlOrigens;
         }
+    }
 
+    // 2. Preencher Tabela
+    const tbody = document.querySelector('#tabelaClientes tbody');
+    if (tbody) {
         const filtrados = clientes.filter(c => 
             (c.nome_responsavel || "").toLowerCase().includes(termoResp) && 
             (c.nome_crianca || "").toLowerCase().includes(termoCrianca)
@@ -299,7 +318,6 @@ window.marcarStatus = async function(id, clienteId, status) {
 };
 
 window.carregarIndicadoresAdmin = async function() {
-    // (Lógica simplificada para brevidade, mas funcional)
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
@@ -322,11 +340,15 @@ window.carregarIndicadoresAdmin = async function() {
     const elFat = document.getElementById('kpiFaturamento');
     if (elFat) elFat.innerText = fat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    // Atualiza outros KPIs se existirem na tela...
     const elTot = document.getElementById('kpiTotal');
     if (elTot) elTot.innerText = tot;
     
-    // Lista Top Serviços
+    const elCanc = document.getElementById('kpiCancelados');
+    if (elCanc) elCanc.innerText = canc;
+    
+    const elComp = document.getElementById('kpiComparecimento');
+    if (elComp) elComp.innerText = tot > 0 ? ((comp / (tot - canc)) * 100).toFixed(0) + '%' : '0%';
+    
     const tbody = document.querySelector('#tabelaTopServicos tbody');
     if (tbody) {
         tbody.innerHTML = "";
@@ -369,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CADASTRO ---
     const formCad = document.getElementById('formCadastro');
     if (formCad) {
-        // Máscara de Telefone
         const telInput = document.getElementById('telefone');
         if (telInput) {
             telInput.addEventListener('input', e => {
@@ -414,15 +435,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- AGENDAR ---
+    // --- AGENDAR (CORREÇÃO DA TELA BRANCA) ---
     const btnBuscar = document.getElementById('btnBuscarCliente');
     if (btnBuscar) {
+        // Variáveis de escopo
         let clienteAtual = null;
         let horarioEscolhido = null;
         let duracaoEscolhida = 0;
         let profissionalEscolhido = null;
 
-        // Carregar Serviços ao abrir a página
+        // Carregar Serviços
         (async () => {
             const select = document.getElementById('servicoSelect');
             if (select) {
@@ -431,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     select.innerHTML = '<option value="">Selecione...</option>';
                     data.forEach(s => {
                         const opt = document.createElement('option');
-                        opt.value = s.nome; // Usamos nome para display/salvar
+                        opt.value = s.nome;
                         opt.text = `${s.nome} - R$ ${s.valor}`;
                         opt.setAttribute('data-tempo', s.duracao_minutos);
                         opt.setAttribute('data-valor', s.valor);
@@ -454,11 +476,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             clienteAtual = data;
             
-            // Troca de tela
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step1').style.display = 'none';
-            document.getElementById('step2').classList.add('active');
-            document.getElementById('step2').style.display = 'block';
+            // CORREÇÃO CRÍTICA: Remove a classe hidden explicitamente
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            
+            step1.classList.remove('active');
+            step1.style.display = 'none'; // Garante que some
+            
+            step2.classList.remove('hidden'); // Remove o hidden do CSS
+            step2.classList.add('active');
+            step2.style.display = 'block';    // Garante que aparece
 
             document.getElementById('infoCliente').innerHTML = `
                 <div style="text-align:center;">
@@ -473,6 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const areaFid = document.getElementById('fidelidadeArea');
             if (areaFid) {
                 areaFid.style.display = 'block';
+                areaFid.classList.remove('hidden');
                 if (cortesNoCiclo === 10) {
                     clienteAtual.isGratisAgora = true;
                     areaFid.innerHTML = '🎁 <b>PARABÉNS!</b> Este corte será GRÁTIS!';
@@ -483,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Lógica de Carregar Horários
+        // Lógica de Carregar Horários (Cópia da função original para garantir escopo)
         const dataInput = document.getElementById('dataInput');
         const servicoSelect = document.getElementById('servicoSelect');
 
@@ -501,19 +529,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const duracao = parseInt(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo'));
                 
-                // Validação de Data/Hora Passada
+                // ... (Lógica de horário e profissionais igual à anterior) ...
+                // Recriando a lógica aqui para garantir que funcione dentro do listener
                 const agora = new Date();
                 const dataHojeStr = agora.toLocaleDateString('pt-BR').split('/').reverse().join('-'); 
                 const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
                 const isHoje = (dataStr === dataHojeStr);
 
-                // Dia da semana para filtrar profissionais
                 const partesData = dataStr.split('-'); 
                 const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
                 const diasMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
                 const diaTexto = diasMap[diaSemanaNum];
 
-                // 1. Busca Profissionais
                 const { data: todosProfs } = await supabaseClient.from('profissionais').select('*');
                 const prosDoDia = todosProfs.filter(p => !p.dias_trabalho || p.dias_trabalho.includes(diaTexto));
 
@@ -522,14 +549,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // 2. Busca Ocupados
                 const { data: ocupados } = await supabaseClient
                     .from('agendamentos')
                     .select('horario_inicio, horario_fim, profissional_nome')
                     .eq('data_agendada', dataStr)
                     .neq('status', 'Cancelado');
 
-                // Define limites do dia
                 let menorInicio = 24 * 60;
                 let maiorFim = 0;
                 prosDoDia.forEach(p => {
@@ -542,9 +567,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 lista.innerHTML = "";
-                // Reseta variáveis globais de slot
-                window.disponibilidadePorSlot = {};
                 let temHorario = false;
+                
+                // Variável local para slot
+                let mapSlots = {};
 
                 for (let m = menorInicio; m <= maiorFim - duracao; m += 30) {
                     if (isHoje && m < (minutosAgora + 30)) continue;
@@ -577,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (livres.length > 0) {
-                        window.disponibilidadePorSlot[horarioFormatado] = livres;
+                        mapSlots[horarioFormatado] = livres;
                         const btn = document.createElement('span');
                         btn.className = 'slot-btn';
                         btn.textContent = horarioFormatado;
@@ -606,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
             servicoSelect.addEventListener('change', carregarHorarios);
         }
 
-        // Funções auxiliares de UI para Agendamento
+        // Funções auxiliares internas
         function mostrarModalProfissionais(lista) {
             const modal = document.getElementById('modalProfissionais');
             const divLista = document.getElementById('listaProfissionaisModal');
@@ -673,14 +699,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const btnZap = document.getElementById('btnZap');
                 if(btnZap) {
                     btnZap.onclick = () => {
-                        window.enviarComprovanteZap();
+                        window.enviarComprovanteZap(clienteAtual, dataInput.value, horarioEscolhido, profissionalEscolhido);
                     };
                 }
             }
         });
     }
 
-    // --- LÓGICA DE GERENCIAR (gerenciar.html) ---
+    // --- GERENCIAR ---
     const btnBuscaAgend = document.getElementById('btnBuscarAgendamentos');
     if (btnBuscaAgend) {
         btnBuscaAgend.addEventListener('click', async () => {
@@ -708,24 +734,33 @@ document.addEventListener('DOMContentLoaded', () => {
             agendamentos.forEach(ag => {
                 const card = document.createElement('div'); card.className = 'card';
                 const dataBR = ag.data_agendada.split('-').reverse().join('/');
-                card.innerHTML = `<div class="card-header"><i class="fa-regular fa-calendar card-icon"></i> ${dataBR} às ${ag.horario_inicio.slice(0,5)}</div><div style="font-size:14px; color:#666;">${ag.servico}</div><button class="btn-cancelar" onclick="window.cancelarPeloCliente('${ag.id}')">Cancelar</button>`;
+                card.innerHTML = `
+                    <div class="card-header"><i class="fa-regular fa-calendar card-icon"></i> ${dataBR} às ${ag.horario_inicio.slice(0,5)}</div>
+                    <div style="font-size:14px; color:#666;">${ag.servico}</div>
+                    <button class="btn-cancelar" onclick="window.cancelarPeloCliente('${ag.id}')">Cancelar</button>
+                `;
                 div.appendChild(card);
             });
         });
     }
 
-}); // FIM DO DOMContentLoaded
+}); // FIM DOMContentLoaded
 
-// --- FUNÇÕES DE SUPORTE EXTERNAS ---
-window.enviarComprovanteZap = function() {
-    // Recupera dados do DOM ou variáveis globais
-    // Como estamos fora do escopo, precisamos pegar do HTML
-    // Nota: Variáveis como clienteAtual não estão aqui, então pegamos visualmente
-    // Para simplificar, o botão Zap já deve ser configurado dentro do fluxo ou usar dados básicos
-    // Correção: A função onclick do HTML chama esta função, mas ela precisa dos dados.
-    // Solução: O botão Zap no DOMContentLoaded já define o onclick com closure. 
-    // Esta função fica aqui apenas como fallback seguro.
-    alert("Use o botão gerado na tela anterior.");
+// --- FUNÇÕES EXTERNAS ---
+window.enviarComprovanteZap = function(cliente, data, hora, prof) {
+    if(!cliente) { alert("Erro ao gerar link"); return; }
+    const servicoSelect = document.getElementById('servicoSelect');
+    const servicoTxt = servicoSelect.options[servicoSelect.selectedIndex].text;
+    const dataBR = data.split('-').reverse().join('/');
+
+    const msg = `Olá! Agendamento Confirmado!\n` +
+                `Cliente: ${cliente.nome_crianca}\n` +
+                `Serviço: ${servicoTxt}\n` +
+                `Dia: ${dataBR}\n` +
+                `Horário: ${hora}\n` +
+                `Profissional: ${prof}`;
+                
+    window.open(`https://wa.me/554896304505?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 window.cancelarPeloCliente = async function(id) {
