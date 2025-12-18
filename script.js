@@ -1,30 +1,40 @@
 // ============================================================
-// 1. CONFIGURAÇÃO E CONEXÃO COM O SUPABASE
+// 1. CONFIGURAÇÃO (SUPABASE)
 // ============================================================
-
-// ⚠️ COLE SUAS CHAVES AQUI
 const SUPABASE_URL = 'https://ifmpoykspipfiynhquqj.supabase.co'; 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmbXBveWtzcGlwZml5bmhxdXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NzQzNDAsImV4cCI6MjA4MTU1MDM0MH0.stD6XieSLW2Dvugqe_pG4NuS1fF1DHJRkQUzi7yKYQA';
 
-// Inicializa a variável do cliente
-let supabaseClient;
+// Variável Global
+let supabaseClient = null;
 
-// Tenta conectar imediatamente
-try {
+// --- INICIALIZAÇÃO SEGURA DO BANCO DE DADOS ---
+function initSupabase() {
+    if (supabaseClient) return true; // Já iniciado
+
     if (typeof supabase !== 'undefined') {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("Supabase conectado com sucesso.");
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log("✅ Supabase conectado!");
+            return true;
+        } catch (e) {
+            console.error("❌ Erro ao conectar Supabase:", e);
+            alert("Erro crítico: Falha na conexão com o banco de dados.");
+            return false;
+        }
     } else {
-        console.error("Biblioteca Supabase não encontrada no HTML.");
+        console.error("❌ Biblioteca Supabase não encontrada.");
+        alert("Erro: A biblioteca do Supabase não carregou. Verifique sua internet.");
+        return false;
     }
-} catch (e) {
-    console.error("Erro ao inicializar Supabase:", e);
 }
 
-// ============================================================
-// 2. FUNÇÕES UTILITÁRIAS (GLOBAIS)
-// ============================================================
+// Tenta iniciar imediatamente
+initSupabase();
 
+
+// ============================================================
+// 2. FUNÇÕES UTILITÁRIAS
+// ============================================================
 window.showToast = function(message, type = 'info') {
     let container = document.getElementById('toast-container');
     if (!container) {
@@ -62,20 +72,28 @@ window.setLoading = function(btnId, isLoading, text = "Aguarde...") {
     }
 };
 
+
 // ============================================================
-// 3. LÓGICA DE ADMINISTRAÇÃO (GLOBAIS)
+// 3. ADMINISTRAÇÃO (LOGIN E GESTÃO)
 // ============================================================
 
 window.logarAdmin = function() {
+    // Garante que o banco está conectado antes de tentar logar
+    if (!initSupabase()) return;
+
     const senhaInput = document.getElementById('senhaAdmin');
     if (!senhaInput) return;
     
     if (senhaInput.value === "admin123") {
-        document.getElementById('loginArea').style.display = 'none';
+        const loginArea = document.getElementById('loginArea');
+        const painelAdmin = document.getElementById('painelAdmin');
         
-        const painel = document.getElementById('painelAdmin');
-        painel.classList.remove('hidden'); // Remove a classe que bloqueia
-        painel.style.display = 'block';    // Garante visibilidade
+        // Força o estilo diretamente para garantir que funcione
+        if(loginArea) loginArea.style.display = 'none';
+        if(painelAdmin) {
+            painelAdmin.style.display = 'block';
+            painelAdmin.classList.remove('hidden');
+        }
         
         window.initAdmin();
     } else {
@@ -88,14 +106,18 @@ window.initAdmin = function() {
     const inputDate = document.getElementById('dataAgendaAdmin');
     if (inputDate) inputDate.value = hoje;
     
-    // Carrega tudo
-    if(window.carregarAgendaAdmin) window.carregarAgendaAdmin();
-    if(window.carregarServicosAdmin) window.carregarServicosAdmin();
-    if(window.carregarProfissionaisAdmin) window.carregarProfissionaisAdmin();
-    if(window.carregarIndicadoresAdmin) window.carregarIndicadoresAdmin();
-    if(window.carregarFiltroProfissionais) window.carregarFiltroProfissionais();
-    if(window.carregarClientesAdmin) window.carregarClientesAdmin();
+    // Chama as funções de carregamento com segurança
+    safeCall(window.carregarAgendaAdmin);
+    safeCall(window.carregarServicosAdmin);
+    safeCall(window.carregarProfissionaisAdmin);
+    safeCall(window.carregarIndicadoresAdmin);
+    safeCall(window.carregarFiltroProfissionais);
+    safeCall(window.carregarClientesAdmin);
 };
+
+function safeCall(fn) {
+    if (typeof fn === 'function') fn();
+}
 
 window.abrirTab = function(tabName) {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
@@ -110,6 +132,7 @@ window.abrirTab = function(tabName) {
 // --- Funções CRUD do Admin ---
 
 window.salvarServico = async function() {
+    if (!initSupabase()) return;
     const nome = document.getElementById('nomeServico').value;
     const valor = document.getElementById('valorServico').value;
     const tempo = document.getElementById('tempoServico').value;
@@ -117,24 +140,22 @@ window.salvarServico = async function() {
     if (!nome || !valor || !tempo) return window.showToast("Preencha todos os campos!", 'error');
 
     const { error } = await supabaseClient.from('servicos').insert([{ nome, valor, duracao_minutos: tempo }]);
-    
     if (error) window.showToast("Erro: " + error.message, 'error');
     else {
         window.showToast("Serviço Salvo!", 'success');
         window.carregarServicosAdmin();
         document.getElementById('nomeServico').value = "";
         document.getElementById('valorServico').value = "";
-        document.getElementById('tempoServico').value = "";
     }
 };
 
 window.carregarServicosAdmin = async function() {
+    if (!initSupabase()) return;
     const tbody = document.querySelector('#tabelaServicos tbody');
     if (!tbody) return;
     
     const { data } = await supabaseClient.from('servicos').select('*');
     tbody.innerHTML = "";
-    
     if (data) {
         data.forEach(s => {
             tbody.innerHTML += `<tr><td>${s.nome}</td><td>R$ ${s.valor}</td><td>${s.duracao_minutos} min</td><td><button class="btn btn-red" onclick="deletarItem('servicos', '${s.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
@@ -143,17 +164,16 @@ window.carregarServicosAdmin = async function() {
 };
 
 window.salvarProfissional = async function() {
+    if (!initSupabase()) return;
     const nome = document.getElementById('nomeProf').value;
     const inicio = document.getElementById('inicioProf').value;
     const fim = document.getElementById('fimProf').value;
-    
     const checkboxes = document.querySelectorAll('input[name="diaTrabalho"]:checked');
     const diasString = Array.from(checkboxes).map(cb => cb.value).join(',');
 
     if (!nome || !inicio || !fim || !diasString) return window.showToast("Preencha tudo!", 'error');
 
     const { error } = await supabaseClient.from('profissionais').insert([{ nome, dias_trabalho: diasString, horario_inicio: inicio, horario_fim: fim }]);
-    
     if (error) window.showToast("Erro: " + error.message, 'error');
     else {
         window.showToast("Profissional Salvo!", 'success');
@@ -164,12 +184,11 @@ window.salvarProfissional = async function() {
 };
 
 window.carregarProfissionaisAdmin = async function() {
+    if (!initSupabase()) return;
     const tbody = document.querySelector('#tabelaProfissionais tbody');
     if (!tbody) return;
-    
     const { data } = await supabaseClient.from('profissionais').select('*');
     tbody.innerHTML = "";
-    
     if (data) {
         data.forEach(p => {
             tbody.innerHTML += `<tr><td>${p.nome}</td><td>${p.horario_inicio.slice(0,5)} - ${p.horario_fim.slice(0,5)}</td><td>${p.dias_trabalho}</td><td><button class="btn btn-red" onclick="deletarItem('profissionais', '${p.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
@@ -178,74 +197,46 @@ window.carregarProfissionaisAdmin = async function() {
 };
 
 window.carregarFiltroProfissionais = async function() {
+    if (!initSupabase()) return;
     const select = document.getElementById('filtroProfissionalAgenda');
     if (!select) return;
-    
     const { data } = await supabaseClient.from('profissionais').select('nome');
     select.innerHTML = '<option value="">Todos os Profissionais</option>';
-    if (data) {
-        data.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.nome;
-            opt.textContent = p.nome;
-            select.appendChild(opt);
-        });
-    }
+    if (data) data.forEach(p => select.appendChild(new Option(p.nome, p.nome)));
 };
 
-// --- CORREÇÃO DA ABA CLIENTES (Origem e Lista) ---
 window.carregarClientesAdmin = async function() {
+    if (!initSupabase()) return;
     const termoResp = document.getElementById('buscaResponsavel')?.value.toLowerCase() || "";
     const termoCrianca = document.getElementById('buscaCrianca')?.value.toLowerCase() || "";
     
-    // Busca todos os clientes
-    let { data: clientes, error } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
-    
-    if (error) return console.error(error);
+    let { data: clientes } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
     if (!clientes) clientes = [];
 
-    // 1. Atualizar KPI de Origem (Independente da tabela)
+    // KPI Origem
     const elLista = document.getElementById('kpiOrigemList');
     if (elLista && !termoResp && !termoCrianca) {
-        const elTotal = document.getElementById('kpiTotalClientes');
-        if (elTotal) elTotal.innerText = clientes.length;
-        
-        if (clientes.length === 0) {
-            elLista.innerHTML = "Nenhum dado ainda.";
-        } else {
+        document.getElementById('kpiTotalClientes').innerText = clientes.length;
+        if (clientes.length === 0) elLista.innerHTML = "Nenhum dado.";
+        else {
             const origensCount = {};
-            clientes.forEach(c => { 
-                const o = c.origem || 'Não informado'; 
-                origensCount[o] = (origensCount[o] || 0) + 1; 
-            });
-            
+            clientes.forEach(c => { const o = c.origem || 'Não informado'; origensCount[o] = (origensCount[o] || 0) + 1; });
             let htmlOrigens = '<ul class="origin-list">';
-            Object.entries(origensCount)
-                .sort((a,b) => b[1] - a[1])
-                .forEach(([nome, qtd]) => {
-                    const pct = ((qtd/clientes.length)*100).toFixed(0);
-                    htmlOrigens += `<li class="origin-item" style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
-                        <span>${nome} <small>(${qtd})</small></span> 
-                        <span style="font-weight:bold; color:var(--secondary);">${pct}%</span>
-                    </li>`;
-                });
+            Object.entries(origensCount).sort((a,b) => b[1] - a[1]).forEach(([nome, qtd]) => {
+                const pct = ((qtd/clientes.length)*100).toFixed(0);
+                htmlOrigens += `<li class="origin-item" style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;"><span>${nome} <small>(${qtd})</small></span> <span style="font-weight:bold; color:var(--secondary);">${pct}%</span></li>`;
+            });
             htmlOrigens += '</ul>';
             elLista.innerHTML = htmlOrigens;
         }
     }
 
-    // 2. Preencher Tabela
     const tbody = document.querySelector('#tabelaClientes tbody');
     if (tbody) {
-        const filtrados = clientes.filter(c => 
-            (c.nome_responsavel || "").toLowerCase().includes(termoResp) && 
-            (c.nome_crianca || "").toLowerCase().includes(termoCrianca)
-        );
-        
+        const filtrados = clientes.filter(c => (c.nome_responsavel||"").toLowerCase().includes(termoResp) && (c.nome_crianca||"").toLowerCase().includes(termoCrianca));
         tbody.innerHTML = "";
-        if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Nenhum encontrado</td></tr>';
-        } else {
+        if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Nenhum encontrado</td></tr>';
+        else {
             filtrados.forEach(c => {
                 const nasc = c.data_nascimento ? c.data_nascimento.split('-').reverse().join('/') : "-";
                 tbody.innerHTML += `<tr><td><strong>${c.codigo_cliente}</strong></td><td>${c.nome_responsavel}</td><td>${c.nome_crianca}</td><td>${nasc}</td><td>${c.telefone}</td><td><button class="btn btn-red" onclick="deletarItem('clientes', '${c.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
@@ -255,48 +246,31 @@ window.carregarClientesAdmin = async function() {
 };
 
 window.carregarAgendaAdmin = async function() {
+    if (!initSupabase()) return;
     const dataInput = document.getElementById('dataAgendaAdmin');
     if (!dataInput) return;
-    
-    const data = dataInput.value;
-    const filtro = document.getElementById('filtroProfissionalAgenda')?.value;
     const div = document.getElementById('listaAgendaAdmin');
-    
     div.innerHTML = '<div style="text-align:center; padding:20px;">Carregando...</div>';
 
-    let query = supabaseClient.from('agendamentos')
-        .select(`*, clientes(nome_crianca, nome_responsavel, observacoes, autoriza_foto)`)
-        .eq('data_agendada', data)
-        .order('horario_inicio');
-
+    let query = supabaseClient.from('agendamentos').select(`*, clientes(nome_crianca, nome_responsavel, observacoes, autoriza_foto)`).eq('data_agendada', dataInput.value).order('horario_inicio');
+    const filtro = document.getElementById('filtroProfissionalAgenda')?.value;
     if (filtro) query = query.eq('profissional_nome', filtro);
 
     const { data: agenda } = await query;
-
     if (!agenda || agenda.length === 0) {
-        div.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Nenhum agendamento encontrado.</div>';
+        div.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Nenhum agendamento.</div>';
         return;
     }
 
     let html = `<table><thead><tr><th>Hora</th><th>Cliente</th><th>Serviço/Prof</th><th>Status</th><th>Ações</th></tr></thead><tbody>`;
     agenda.forEach(item => {
         let badge = `status-${item.status.split(' ')[0]}`;
-        const horaDisplay = `${item.horario_inicio.slice(0,5)} - ${item.horario_fim.slice(0,5)}`;
-        
         html += `<tr>
-            <td><strong>${horaDisplay}</strong></td>
-            <td>
-                ${item.clientes?.nome_crianca} <small>(${item.clientes?.nome_responsavel})</small>
-                ${item.clientes?.observacoes ? `<br><small style="color:red">Obs: ${item.clientes.observacoes}</small>` : ''}
-            </td>
+            <td><strong>${item.horario_inicio.slice(0,5)} - ${item.horario_fim.slice(0,5)}</strong></td>
+            <td>${item.clientes?.nome_crianca} <small>(${item.clientes?.nome_responsavel})</small><br><small style="color:red">${item.clientes?.observacoes || ''}</small></td>
             <td>${item.servico}<br><small>${item.profissional_nome || 'Equipe'}</small></td>
             <td><span class="status-badge ${badge}">${item.status}</span></td>
-            <td>
-                ${item.status === 'Agendado' ? `
-                <button class="btn btn-green" style="padding:5px; width:auto; display:inline;" onclick="marcarStatus('${item.id}', '${item.cliente_id}', 'Compareceu')"><i class="fa-solid fa-check"></i></button>
-                <button class="btn btn-red" style="padding:5px; width:auto; display:inline;" onclick="marcarStatus('${item.id}', '${item.cliente_id}', 'Faltou')"><i class="fa-solid fa-xmark"></i></button>
-                ` : '-'}
-            </td>
+            <td>${item.status === 'Agendado' ? `<button class="btn btn-green" onclick="marcarStatus('${item.id}', '${item.cliente_id}', 'Compareceu')">✅</button> <button class="btn btn-red" onclick="marcarStatus('${item.id}', '${item.cliente_id}', 'Faltou')">❌</button>` : '-'}</td>
         </tr>`;
     });
     div.innerHTML = html + "</tbody></table>";
@@ -304,20 +278,17 @@ window.carregarAgendaAdmin = async function() {
 
 window.marcarStatus = async function(id, clienteId, status) {
     if (!confirm(`Marcar como ${status}?`)) return;
-    
     await supabaseClient.from('agendamentos').update({ status: status }).eq('id', id);
-    
     if (status === 'Compareceu') {
         const { data } = await supabaseClient.from('clientes').select('saldo_fidelidade').eq('id', clienteId).single();
         await supabaseClient.from('clientes').update({ saldo_fidelidade: (data.saldo_fidelidade || 0) + 1 }).eq('id', clienteId);
-        window.showToast("Presença confirmada (+1 fidelidade)", 'success');
+        window.showToast("Presença confirmada!", 'success');
     }
-    
-    window.carregarAgendaAdmin();
-    window.carregarIndicadoresAdmin();
+    window.carregarAgendaAdmin(); window.carregarIndicadoresAdmin();
 };
 
 window.carregarIndicadoresAdmin = async function() {
+    if (!initSupabase()) return;
     const date = new Date();
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString();
@@ -327,42 +298,27 @@ window.carregarIndicadoresAdmin = async function() {
     
     let fat = 0, tot = data.length, canc = 0, comp = 0;
     const servs = {};
-    
     data.forEach(item => {
         if (item.status === 'Cancelado') canc++;
-        if (item.status === 'Compareceu') { 
-            comp++; 
-            if (!item.eh_gratis) fat += parseFloat(item.valor_servico || 0); 
-        }
+        if (item.status === 'Compareceu') { comp++; if (!item.eh_gratis) fat += parseFloat(item.valor_servico || 0); }
         if (item.status !== 'Cancelado') servs[item.servico] = (servs[item.servico] || 0) + 1;
     });
 
-    const elFat = document.getElementById('kpiFaturamento');
-    if (elFat) elFat.innerText = fat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    
-    const elTot = document.getElementById('kpiTotal');
-    if (elTot) elTot.innerText = tot;
-    
-    const elCanc = document.getElementById('kpiCancelados');
-    if (elCanc) elCanc.innerText = canc;
-    
-    const elComp = document.getElementById('kpiComparecimento');
-    if (elComp) elComp.innerText = tot > 0 ? ((comp / (tot - canc)) * 100).toFixed(0) + '%' : '0%';
+    if(document.getElementById('kpiFaturamento')) document.getElementById('kpiFaturamento').innerText = fat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    if(document.getElementById('kpiTotal')) document.getElementById('kpiTotal').innerText = tot;
+    if(document.getElementById('kpiCancelados')) document.getElementById('kpiCancelados').innerText = canc;
+    if(document.getElementById('kpiComparecimento')) document.getElementById('kpiComparecimento').innerText = tot > 0 ? ((comp / (tot - canc)) * 100).toFixed(0) + '%' : '0%';
     
     const tbody = document.querySelector('#tabelaTopServicos tbody');
-    if (tbody) {
+    if(tbody) {
         tbody.innerHTML = "";
-        Object.entries(servs).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => {
-             tbody.innerHTML += `<tr><td>${k}</td><td>${v}</td><td>-</td></tr>`;
-        });
+        Object.entries(servs).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => tbody.innerHTML += `<tr><td>${k}</td><td>${v}</td><td>-</td></tr>`);
     }
 };
 
 window.deletarItem = async function(tabela, id) {
     if (!confirm("Excluir item permanentemente?")) return;
-    
     const { error } = await supabaseClient.from(tabela).delete().eq('id', id);
-    
     if (error) window.showToast("Erro: " + error.message, 'error');
     else {
         window.showToast("Excluído com sucesso!", 'success');
@@ -374,17 +330,17 @@ window.deletarItem = async function(tabela, id) {
 
 window.cancelarAgendamento = async function(id) {
     if (!confirm("Cancelar agendamento?")) return;
-    
     const { error } = await supabaseClient.from('agendamentos').update({ status: 'Cancelado' }).eq('id', id);
-    if (error) window.showToast("Erro: " + error.message, 'error');
+    if(error) window.showToast("Erro: " + error.message, 'error');
     else {
         window.showToast("Cancelado com sucesso!", 'success');
         if (document.getElementById('btnBuscarAgendamentos')) document.getElementById('btnBuscarAgendamentos').click();
     }
 };
 
+
 // ============================================================
-// 4. EVENT LISTENER PRINCIPAL (CARREGAMENTO DA PÁGINA)
+// 4. EVENT LISTENERS DE PÁGINA (CARREGAMENTO)
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -401,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         formCad.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!initSupabase()) return;
             window.setLoading('btnSalvar', true, "Salvando...");
             
             const codigo = new Date().getFullYear() + '-' + Math.floor(Math.random() * 10000);
@@ -419,33 +376,32 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const { error } = await supabaseClient.from('clientes').insert([dados]);
-            window.setLoading('btnSalvar', false, "Salvar Cadastro");
+            window.setLoading('btnSalvar', false, "Concluir Cadastro");
 
             if (error) {
                 window.showToast("Erro ao salvar: " + error.message, 'error');
             } else {
-                document.getElementById('formBox').classList.add('hidden');
-                document.getElementById('formBox').style.display = 'none';
-                
+                document.getElementById('formBox').style.display = 'none'; // Force style
                 document.getElementById('sucessoBox').classList.remove('hidden');
-                document.getElementById('sucessoBox').style.display = 'block';
-                
+                document.getElementById('sucessoBox').style.display = 'block'; // Force style
                 document.getElementById('codigoGerado').innerText = codigo;
             }
         });
     }
 
-    // --- AGENDAR (CORREÇÃO DA TELA BRANCA) ---
+    // --- AGENDAR ---
     const btnBuscar = document.getElementById('btnBuscarCliente');
     if (btnBuscar) {
-        // Variáveis de escopo
+        // Variáveis de Estado (Escopo do Listener)
         let clienteAtual = null;
         let horarioEscolhido = null;
         let duracaoEscolhida = 0;
         let profissionalEscolhido = null;
+        let disponibilidadePorSlot = {};
 
         // Carregar Serviços
         (async () => {
+            if (!initSupabase()) return;
             const select = document.getElementById('servicoSelect');
             if (select) {
                 const { data } = await supabaseClient.from('servicos').select('*');
@@ -465,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. Buscar Cliente
         btnBuscar.addEventListener('click', async () => {
+            if (!initSupabase()) return;
             const codigo = document.getElementById('idClienteInput').value.trim();
             if (!codigo) return window.showToast("Digite o código", 'error');
 
@@ -476,16 +433,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             clienteAtual = data;
             
-            // CORREÇÃO CRÍTICA: Remove a classe hidden explicitamente
-            const step1 = document.getElementById('step1');
+            // Troca de Telas
+            document.getElementById('step1').style.display = 'none';
             const step2 = document.getElementById('step2');
-            
-            step1.classList.remove('active');
-            step1.style.display = 'none'; // Garante que some
-            
-            step2.classList.remove('hidden'); // Remove o hidden do CSS
-            step2.classList.add('active');
-            step2.style.display = 'block';    // Garante que aparece
+            step2.classList.remove('hidden');
+            step2.style.display = 'block';
 
             document.getElementById('infoCliente').innerHTML = `
                 <div style="text-align:center;">
@@ -496,11 +448,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fidelidade
             const cortes = data.saldo_fidelidade || 0;
             const cortesNoCiclo = cortes % 11;
-            
             const areaFid = document.getElementById('fidelidadeArea');
+            
             if (areaFid) {
                 areaFid.style.display = 'block';
-                areaFid.classList.remove('hidden');
                 if (cortesNoCiclo === 10) {
                     clienteAtual.isGratisAgora = true;
                     areaFid.innerHTML = '🎁 <b>PARABÉNS!</b> Este corte será GRÁTIS!';
@@ -511,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Lógica de Carregar Horários (Cópia da função original para garantir escopo)
+        // 2. Carregar Horários
         const dataInput = document.getElementById('dataInput');
         const servicoSelect = document.getElementById('servicoSelect');
 
@@ -519,6 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dataInput.min = new Date().toISOString().split('T')[0];
             
             const carregarHorarios = async () => {
+                if (!initSupabase()) return;
                 const dataStr = dataInput.value;
                 const servico = servicoSelect.value;
                 if (!dataStr || !servico) return;
@@ -528,19 +480,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('infoSelecao').style.display = 'none';
 
                 const duracao = parseInt(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo'));
-                
-                // ... (Lógica de horário e profissionais igual à anterior) ...
-                // Recriando a lógica aqui para garantir que funcione dentro do listener
+
+                // Logica de data
                 const agora = new Date();
                 const dataHojeStr = agora.toLocaleDateString('pt-BR').split('/').reverse().join('-'); 
                 const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
                 const isHoje = (dataStr === dataHojeStr);
-
                 const partesData = dataStr.split('-'); 
                 const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
                 const diasMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
                 const diaTexto = diasMap[diaSemanaNum];
 
+                // Busca profissionais do dia
                 const { data: todosProfs } = await supabaseClient.from('profissionais').select('*');
                 const prosDoDia = todosProfs.filter(p => !p.dias_trabalho || p.dias_trabalho.includes(diaTexto));
 
@@ -552,11 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { data: ocupados } = await supabaseClient
                     .from('agendamentos')
                     .select('horario_inicio, horario_fim, profissional_nome')
-                    .eq('data_agendada', dataStr)
-                    .neq('status', 'Cancelado');
+                    .eq('data_agendada', dataStr).neq('status', 'Cancelado');
 
-                let menorInicio = 24 * 60;
-                let maiorFim = 0;
+                let menorInicio = 24 * 60, maiorFim = 0;
                 prosDoDia.forEach(p => {
                     const [hI, mI] = p.horario_inicio.split(':').map(Number);
                     const [hF, mF] = p.horario_fim.split(':').map(Number);
@@ -567,10 +516,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 lista.innerHTML = "";
+                disponibilidadePorSlot = {}; 
                 let temHorario = false;
-                
-                // Variável local para slot
-                let mapSlots = {};
 
                 for (let m = menorInicio; m <= maiorFim - duracao; m += 30) {
                     if (isHoje && m < (minutosAgora + 30)) continue;
@@ -603,22 +550,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (livres.length > 0) {
-                        mapSlots[horarioFormatado] = livres;
+                        disponibilidadePorSlot[horarioFormatado] = livres;
                         const btn = document.createElement('span');
                         btn.className = 'slot-btn';
                         btn.textContent = horarioFormatado;
-                        
                         btn.onclick = () => {
                             document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
                             horarioEscolhido = horarioFormatado;
                             duracaoEscolhida = duracao;
-                            
-                            if (livres.length === 1) {
-                                definirProfissional(livres[0].nome);
-                            } else {
-                                mostrarModalProfissionais(livres);
-                            }
+                            if (livres.length === 1) selecionarProfissional(livres[0].nome);
+                            else mostrarModalProfissionais(livres);
                         };
                         lista.appendChild(btn);
                         temHorario = true;
@@ -632,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
             servicoSelect.addEventListener('change', carregarHorarios);
         }
 
-        // Funções auxiliares internas
+        // Funções internas de modal
         function mostrarModalProfissionais(lista) {
             const modal = document.getElementById('modalProfissionais');
             const divLista = document.getElementById('listaProfissionaisModal');
@@ -642,74 +584,77 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.className = 'prof-btn';
                 btn.style.cssText = "background:#f3f4f6; border:1px solid #ddd; padding:10px; margin-bottom:5px; cursor:pointer; border-radius:5px;";
                 btn.innerHTML = `<i class="fa-solid fa-user"></i> ${p.nome}`;
-                btn.onclick = () => { 
-                    definirProfissional(p.nome); 
-                    modal.style.display = 'none'; 
-                };
+                btn.onclick = () => { selecionarProfissional(p.nome); modal.style.display = 'none'; };
                 divLista.appendChild(btn);
             });
             modal.style.display = 'flex';
         }
 
-        function definirProfissional(nome) {
+        function selecionarProfissional(nome) {
             profissionalEscolhido = nome;
             const info = document.getElementById('infoSelecao');
             if(info) {
                 info.style.display = 'block';
-                info.classList.remove('hidden');
                 info.innerHTML = `Profissional: <strong>${nome}</strong>`;
             }
             document.getElementById('btnConfirmarAgendamento').disabled = false;
         }
 
-        // 3. Confirmar Agendamento
-        document.getElementById('btnConfirmarAgendamento').addEventListener('click', async () => {
-            if(!clienteAtual || !horarioEscolhido || !profissionalEscolhido) return;
-            
-            window.setLoading('btnConfirmarAgendamento', true, "Confirmando...");
-
-            const [h, m] = horarioEscolhido.split(':').map(Number);
-            const hF = Math.floor((h*60 + m + duracaoEscolhida)/60).toString().padStart(2,'0');
-            const mF = ((h*60 + m + duracaoEscolhida)%60).toString().padStart(2,'0');
-            
-            const valor = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-valor'));
-
-            const { error } = await supabaseClient.from('agendamentos').insert([{
-                cliente_id: clienteAtual.id,
-                servico: servicoSelect.options[servicoSelect.selectedIndex].text,
-                data_agendada: dataInput.value,
-                horario_inicio: horarioEscolhido,
-                horario_fim: `${hF}:${mF}`,
-                profissional_nome: profissionalEscolhido,
-                valor_servico: valor,
-                eh_gratis: clienteAtual.isGratisAgora || false,
-                status: 'Agendado'
-            }]);
-
-            if (error) {
-                window.showToast("Erro: " + error.message, 'error');
-                window.setLoading('btnConfirmarAgendamento', false);
-            } else {
-                document.getElementById('step2').classList.remove('active');
-                document.getElementById('step2').style.display = 'none';
-                document.getElementById('step3').classList.add('active');
-                document.getElementById('step3').style.display = 'block';
-                
-                // Configura botão Zap
-                const btnZap = document.getElementById('btnZap');
-                if(btnZap) {
-                    btnZap.onclick = () => {
-                        window.enviarComprovanteZap(clienteAtual, dataInput.value, horarioEscolhido, profissionalEscolhido);
-                    };
+        // 3. Confirmar
+        const btnConfirma = document.getElementById('btnConfirmarAgendamento');
+        if(btnConfirma) {
+            btnConfirma.addEventListener('click', async () => {
+                if(!clienteAtual || !horarioEscolhido || !profissionalEscolhido) {
+                    return window.showToast("Selecione horário e profissional!", "error");
                 }
-            }
-        });
+                
+                window.setLoading('btnConfirmarAgendamento', true, "Confirmando...");
+
+                const [h, m] = horarioEscolhido.split(':').map(Number);
+                const fimMinutos = (h * 60) + m + duracaoEscolhida;
+                const hF = Math.floor(fimMinutos / 60).toString().padStart(2, '0');
+                const mF = (fimMinutos % 60).toString().padStart(2, '0');
+                const horarioFim = `${hF}:${mF}`;
+
+                const valor = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-valor'));
+                const servicoNome = servicoSelect.options[servicoSelect.selectedIndex].text;
+
+                const { error } = await supabaseClient.from('agendamentos').insert([{
+                    cliente_id: clienteAtual.id,
+                    servico: servicoNome,
+                    data_agendada: dataInput.value,
+                    horario_inicio: horarioEscolhido,
+                    horario_fim: horarioFim,
+                    profissional_nome: profissionalEscolhido,
+                    valor_servico: valor,
+                    eh_gratis: clienteAtual.isGratisAgora || false,
+                    status: 'Agendado'
+                }]);
+
+                if (error) {
+                    window.showToast("Erro: " + error.message, 'error');
+                    window.setLoading('btnConfirmarAgendamento', false);
+                } else {
+                    document.getElementById('step2').style.display = 'none';
+                    document.getElementById('step3').classList.remove('hidden');
+                    document.getElementById('step3').style.display = 'block';
+                    
+                    const btnZap = document.getElementById('btnZap');
+                    if(btnZap) {
+                        btnZap.onclick = () => {
+                            window.enviarComprovanteZap(clienteAtual, dataInput.value, horarioEscolhido, profissionalEscolhido, servicoNome);
+                        };
+                    }
+                }
+            });
+        }
     }
 
-    // --- GERENCIAR ---
+    // --- GERENCIAR (gerenciar.html) ---
     const btnBuscaAgend = document.getElementById('btnBuscarAgendamentos');
     if (btnBuscaAgend) {
         btnBuscaAgend.addEventListener('click', async () => {
+            if (!initSupabase()) return;
             const codigo = document.getElementById('idClienteBusca').value.trim();
             const div = document.getElementById('listaResultados');
             window.setLoading('btnBuscarAgendamentos', true, "Buscando...");
@@ -747,24 +692,20 @@ document.addEventListener('DOMContentLoaded', () => {
 }); // FIM DOMContentLoaded
 
 // --- FUNÇÕES EXTERNAS ---
-window.enviarComprovanteZap = function(cliente, data, hora, prof) {
-    if(!cliente) { alert("Erro ao gerar link"); return; }
-    const servicoSelect = document.getElementById('servicoSelect');
-    const servicoTxt = servicoSelect.options[servicoSelect.selectedIndex].text;
+window.enviarComprovanteZap = function(cliente, data, hora, prof, servico) {
     const dataBR = data.split('-').reverse().join('/');
-
     const msg = `Olá! Agendamento Confirmado!\n` +
-                `Cliente: ${cliente.nome_crianca}\n` +
-                `Serviço: ${servicoTxt}\n` +
-                `Dia: ${dataBR}\n` +
-                `Horário: ${hora}\n` +
-                `Profissional: ${prof}`;
-                
+                `Cliente: *${cliente.nome_crianca}*\n` +
+                `Serviço: *${servico}*\n` +
+                `Dia: *${dataBR}*\n` +
+                `Horário: *${hora}*\n` +
+                `Profissional: *${prof}*`;
     window.open(`https://wa.me/554896304505?text=${encodeURIComponent(msg)}`, '_blank');
 };
 
 window.cancelarPeloCliente = async function(id) {
     if(!confirm("Tem certeza que deseja cancelar?")) return;
+    if (!initSupabase()) return;
     const { error } = await supabaseClient.from('agendamentos').update({ status: 'Cancelado' }).eq('id', id);
     if(error) window.showToast("Erro: " + error.message, 'error');
     else {
