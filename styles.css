@@ -15,17 +15,30 @@
     --info: #3b82f6;
     --radius: 16px;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* --- RESET BÁSICO --- */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
 body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; line-height: 1.5; }
 
+/* --- FUNDO ARCO-ÍRIS (Tela Inicial) --- */
+.bg-rainbow {
+    background: linear-gradient(-45deg, #4facfe, #ff69b4, #ff9a44, #25d366);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    min-height: 100vh;
+    width: 100%;
+}
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 /* --- COMPONENTES --- */
 .container {
     background: var(--bg-card); width: 100%; max-width: 500px; padding: 30px; 
-    border-radius: var(--radius); box-shadow: var(--shadow); position: relative;
+    border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative;
     animation: slideUp 0.4s ease-out;
 }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -58,6 +71,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--secondary); outl
 }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Botão Compacto (Menor) */
+.btn-compact {
+    width: auto;
+    min-width: 200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+}
 
 .btn-primary { background: var(--primary); box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3); }
 .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
@@ -135,6 +158,24 @@ tr:hover { background: #f8fafc; }
 .float-btn {
     position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: white;
     border-radius: 50%; box-shadow: var(--shadow-hover); display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted); transition: 0.3s; z-index: 100; text-decoration: none; font-size: 1.2rem;
+    color: var(--text-muted); transition: 0.3s; z-index: 100; text-decoration: none; font-size: 1.2rem; cursor: pointer;
 }
 .float-btn:hover { transform: rotate(90deg); color: var(--primary); }
+
+/* Modal Profissionais */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 999; display: none;
+    justify-content: center; align-items: center;
+}
+.modal-content {
+    background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 350px;
+    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUp 0.3s;
+}
+.prof-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.prof-btn {
+    background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 10px;
+    cursor: pointer; font-weight: 600; color: var(--text-main); transition: 0.2s; display: flex; align-items: center; gap: 10px;
+}
+.prof-btn:hover { background: #e0f2fe; border-color: #38bdf8; color: #0284c7; }
+.prof-icon { width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); box-shadow: var(--shadow-sm); }
