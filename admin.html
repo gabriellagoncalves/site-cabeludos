@@ -19,16 +19,17 @@
             --secondary: #20B2AA;    /* Turquesa */
             --secondary-hover: #178a83;
             
-            --bg-body: #f0f2f5;      /* Fundo Geral */
+            --bg-body: #f0f2f5;      /* Fundo Geral (Cinza claro suave) */
             --bg-card: #ffffff;      /* Fundo dos Cartões */
             
             --text-main: #1f2937;    /* Texto Escuro */
             --text-muted: #6b7280;   /* Texto Cinza */
             
             --border: #e5e7eb;
-            --radius: 16px;
+            --radius: 16px;          /* Bordas mais arredondadas */
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
@@ -38,23 +39,27 @@
             background: var(--bg-body); 
             color: var(--text-main);
             min-height: 100vh;
-            font-size: 14px; 
+            font-size: 14px; /* Base mais leve */
         }
 
-        /* --- TELA DE LOGIN --- */
+        /* --- TELA DE LOGIN (CORRIGIDA E ISOLADA) --- */
         #loginArea { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center; 
-            background: linear-gradient(135deg, #fce4ec 0%, #e0f2f1 100%);
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: linear-gradient(135deg, #fce4ec 0%, #e0f2f1 100%); /* Gradiente Suave */
             z-index: 9999;
         }
         
         .login-card { 
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.95); /* Leve transparência */
             padding: 50px 40px; 
             border-radius: 24px; 
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            width: 100%; max-width: 420px;
+            width: 100%; 
+            max-width: 420px;
             text-align: center;
             border: 1px solid rgba(255,255,255,0.5);
             backdrop-filter: blur(10px);
@@ -62,28 +67,61 @@
 
         .login-icon {
             background: linear-gradient(to bottom right, var(--primary), var(--secondary));
-            color: white; width: 80px; height: 80px; border-radius: 50%;
+            color: white;
+            width: 80px; height: 80px; 
+            border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 32px; margin: 0 auto 25px auto;
+            font-size: 32px; 
+            margin: 0 auto 25px auto;
             box-shadow: 0 10px 15px -3px rgba(255, 105, 180, 0.3);
         }
 
         .login-card h2 { margin-bottom: 5px; font-weight: 700; color: var(--text-main); font-size: 24px; }
         .login-card p { color: var(--text-muted); margin-bottom: 30px; font-size: 14px; }
 
-        /* --- INPUTS & BOTÕES --- */
+        /* --- INPUTS & FORMS --- */
         .form-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        label { 
+            display: block; 
+            font-size: 12px; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            margin-bottom: 6px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
 
         input[type="text"], input[type="number"], input[type="password"], input[type="date"], input[type="time"], select { 
-            width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; 
-            font-size: 14px; font-family: inherit; transition: all 0.3s ease; background-color: #fff; color: var(--text-main);
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid var(--border); 
+            border-radius: 12px; 
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            color: var(--text-main);
         }
-        input:focus, select:focus { border-color: var(--secondary); box-shadow: 0 0 0 4px rgba(32, 178, 170, 0.1); }
+        
+        input:focus, select:focus { 
+            border-color: var(--secondary); 
+            box-shadow: 0 0 0 4px rgba(32, 178, 170, 0.1); 
+        }
 
+        /* --- BOTÕES --- */
         .btn { 
-            width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; 
-            font-size: 14px; letter-spacing: 0.5px; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase;
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            text-transform: uppercase;
         }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .btn:active { transform: translateY(0); }
@@ -91,46 +129,102 @@
         .btn-blue { background: linear-gradient(to right, var(--secondary), var(--secondary-hover)); color: white; }
         .btn-green { background: linear-gradient(to right, #10b981, #059669); color: white; }
         .btn-red { background: linear-gradient(to right, #ef4444, #dc2626); color: white; width: auto; padding: 10px 20px; font-size: 12px; }
+        .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 8px; font-size: 16px; }
 
-        /* --- LAYOUT --- */
-        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; animation: slideUp 0.5s ease-out; }
+        /* --- PAINEL PRINCIPAL --- */
+        .container { 
+            max-width: 1200px; 
+            margin: 40px auto; 
+            padding: 0 20px;
+            animation: slideUp 0.5s ease-out;
+        }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Cabeçalho */
         .header { 
-            background: white; padding: 25px 30px; border-radius: var(--radius);
+            background: white; 
+            padding: 25px 30px; 
+            border-radius: var(--radius);
             display: flex; justify-content: space-between; align-items: center; 
-            box-shadow: var(--shadow-sm); margin-bottom: 30px; border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm); 
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
         }
-        .header h2 { color: var(--primary); display: flex; align-items: center; gap: 15px; font-size: 22px; margin: 0; }
+        
+        .header h2 { 
+            color: var(--primary); 
+            display: flex; align-items: center; gap: 15px; 
+            font-size: 22px; margin: 0; 
+        }
 
-        /* Abas */
-        .tabs { display: flex; gap: 15px; margin-bottom: 30px; overflow-x: auto; padding: 5px; scrollbar-width: none; background: white; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
-        .tab { padding: 12px 30px; cursor: pointer; font-weight: 600; color: var(--text-muted); border-radius: 12px; transition: all 0.3s; white-space: nowrap; display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
+        /* Abas de Navegação */
+        .tabs { 
+            display: flex; gap: 15px; margin-bottom: 30px; overflow-x: auto; 
+            padding: 5px; scrollbar-width: none; background: white; 
+            border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+        }
+        .tab { 
+            padding: 12px 30px; cursor: pointer; font-weight: 600; color: var(--text-muted); 
+            border-radius: 12px; transition: all 0.3s; white-space: nowrap; 
+            display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center;
+        }
         .tab:hover { background: #f9fafb; color: var(--secondary); }
-        .tab.active { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(255, 105, 180, 0.3); }
+        .tab.active { 
+            background: var(--primary); color: white; 
+            box-shadow: 0 4px 6px rgba(255, 105, 180, 0.3);
+        }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Cards e Grids */
-        .card-panel { background: white; padding: 30px; border-radius: var(--radius); box-shadow: var(--shadow-sm); margin-bottom: 30px; border: 1px solid var(--border); }
+        /* Cards de Conteúdo (Fundo Branco das Seções) */
+        .card-panel { 
+            background: white; padding: 30px; border-radius: var(--radius); 
+            box-shadow: var(--shadow-sm); margin-bottom: 30px; border: 1px solid var(--border);
+        }
         .card-panel h3 { margin-top: 0; color: var(--text-main); font-size: 18px; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; margin-bottom: 20px; }
-        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; align-items: end; }
 
-        /* Tabelas */
-        .table-container { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        /* Grid de Formulários */
+        .grid-form { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; align-items: end;
+        }
+
+        /* --- TABELAS --- */
+        .table-container { 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
         .table-responsive { overflow-x: auto; width: 100%; background: white; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        
         thead { background-color: #f8fafc; border-bottom: 2px solid var(--border); }
-        th { color: var(--text-muted); font-weight: 700; font-size: 11px; text-transform: uppercase; padding: 18px 24px; text-align: left; letter-spacing: 0.5px; }
-        td { padding: 18px 24px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-main); vertical-align: middle; }
+        th { 
+            color: var(--text-muted); font-weight: 700; font-size: 11px; 
+            text-transform: uppercase; padding: 18px 24px; text-align: left; letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 18px 24px; border-bottom: 1px solid var(--border); 
+            font-size: 14px; color: var(--text-main); vertical-align: middle; 
+        }
+        tr:last-child td { border-bottom: none; }
         tr:hover td { background-color: #f9fafb; }
 
-        /* KPI Cards */
+        /* --- INDICADORES (KPIs) --- */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-bottom: 30px; }
-        .kpi-card { background: white; padding: 25px; border-radius: var(--radius); box-shadow: var(--shadow-sm); text-align: center; border: 1px solid var(--border); position: relative; overflow: hidden; }
-        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .kpi-card { 
+            background: white; padding: 25px; border-radius: var(--radius); 
+            box-shadow: var(--shadow-sm); text-align: center; border: 1px solid var(--border);
+            position: relative; overflow: hidden;
+        }
+        .kpi-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+        }
+        
         .kpi-card h3 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
         .kpi-value { font-size: 32px; font-weight: 700; color: var(--text-main); line-height: 1.2; }
         
@@ -138,7 +232,7 @@
         .border-blue::before { background: #3b82f6; } .text-blue { color: #3b82f6; }
         .border-red::before { background: #ef4444; } .text-red { color: #ef4444; }
 
-        /* Status & Outros */
+        /* --- BADGES E CHECKBOXES --- */
         .status-badge { padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-block; letter-spacing: 0.5px; }
         .status-Agendado { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
         .status-Compareceu { background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; }
@@ -146,9 +240,16 @@
         .status-Cancelado { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
 
         .dias-container { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; padding: 10px; background: #f9fafb; border-radius: 12px; border: 1px solid var(--border); }
-        .dia-label { cursor: pointer; background: white; border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; font-size: 13px; transition: 0.2s; display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .dia-label {
+            cursor: pointer; background: white; border: 1px solid var(--border); 
+            padding: 8px 16px; border-radius: 20px; font-size: 13px; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px; font-weight: 500;
+        }
         .dia-label:hover { border-color: var(--secondary); background: #f0fdfa; }
-        .dia-label input { width: auto; margin: 0; }
+        .dia-label input { width: auto; margin: 0; appearance: none; width: 16px; height: 16px; border: 2px solid #ddd; border-radius: 4px; transition: 0.2s; display: grid; place-content: center; }
+        .dia-label input::before { content: ""; width: 10px; height: 10px; transform: scale(0); transition: 120ms transform ease-in-out; box-shadow: inset 1em 1em var(--secondary); border-radius: 2px; }
+        .dia-label input:checked::before { transform: scale(1); }
+        .dia-label input:checked { border-color: var(--secondary); }
         .dia-label input:checked + span { color: var(--secondary); font-weight: 700; }
 
         /* --- LISTA DE ORIGEM (NOVO) --- */
@@ -160,17 +261,21 @@
         .origin-item:last-child { border-bottom: none; }
         .origin-percent { font-weight: 700; color: var(--secondary); background: #f0fdfa; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
 
+        /* Classes Utilitárias */
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
+<!-- 1. TELA DE LOGIN (FIXADA NA TELA TODA) -->
 <div id="loginArea">
     <div class="login-card">
-        <div class="login-icon"><i class="fa-solid fa-lock"></i></div>
+        <div class="login-icon">
+            <i class="fa-solid fa-lock"></i>
+        </div>
         <h2>Área Restrita</h2>
         <p>Acesso exclusivo para administração</p>
+        
         <div class="form-group">
             <input type="password" id="senhaAdmin" placeholder="Digite a senha de acesso">
         </div>
@@ -180,34 +285,89 @@
     </div>
 </div>
 
-<!-- PAINEL PRINCIPAL -->
+<!-- 2. PAINEL PRINCIPAL (ESCONDIDO INICIALMENTE) -->
 <div id="painelAdmin" class="container hidden">
+    <!-- Cabeçalho -->
     <div class="header">
-        <h2><i class="fa-solid fa-scissors" style="background:var(--primary); color:white; padding:8px; border-radius:8px; font-size:18px;"></i> Gestão Cabeludos & Cia</h2>
-        <button class="btn btn-red" onclick="location.reload()"><i class="fa-solid fa-power-off"></i> Sair</button>
+        <h2>
+            <i class="fa-solid fa-scissors" style="background:var(--primary); color:white; padding:8px; border-radius:8px; font-size:18px;"></i> 
+            Gestão Cabeludos & Cia
+        </h2>
+        <button class="btn btn-red" onclick="location.reload()">
+            <i class="fa-solid fa-power-off"></i> Sair
+        </button>
     </div>
 
+    <!-- Navegação (Abas) -->
     <div class="tabs">
         <div class="tab active" onclick="abrirTab('agenda')"><i class="fa-regular fa-calendar-days"></i> Agenda</div>
+        <div class="tab" onclick="abrirTab('rapido')"><i class="fa-solid fa-bolt"></i> Atendimento Rápido</div>
         <div class="tab" onclick="abrirTab('clientes')"><i class="fa-solid fa-users"></i> Clientes</div>
         <div class="tab" onclick="abrirTab('indicadores')"><i class="fa-solid fa-chart-pie"></i> Indicadores</div>
         <div class="tab" onclick="abrirTab('servicos')"><i class="fa-solid fa-tags"></i> Serviços</div>
         <div class="tab" onclick="abrirTab('profissionais')"><i class="fa-solid fa-id-badge"></i> Equipe</div>
     </div>
 
-    <!-- ABA AGENDA -->
+    <!-- === ABA ATENDIMENTO RÁPIDO (NOVA) === -->
+    <div id="rapido" class="tab-content">
+        <div class="card-panel">
+            <h3>Lançamento Balcão (Sem Agendar)</h3>
+            <p style="color:#666; margin-bottom:20px;">Use para registrar clientes que chegaram na hora.</p>
+            
+            <div class="grid-form">
+                <div>
+                    <label>Nome do Cliente (Opcional):</label>
+                    <input type="text" id="rapidoNomeCliente" placeholder="Ex: Cliente Balcão">
+                </div>
+                <div>
+                    <label>Serviço Realizado:</label>
+                    <select id="rapidoServico">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Profissional:</label>
+                    <select id="rapidoProfissional">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn btn-green" onclick="salvarAtendimentoRapido()" style="margin-top:20px;">
+                <i class="fa-solid fa-check"></i> Registrar e Concluir
+            </button>
+        </div>
+    </div>
+
+    <!-- === CONTEÚDO DA AGENDA === -->
     <div id="agenda" class="tab-content active">
         <div class="card-panel">
             <div class="grid-form">
-                <div><label>Data:</label><input type="date" id="dataAgendaAdmin" onchange="carregarAgendaAdmin()"></div>
-                <div><label>Profissional:</label><select id="filtroProfissionalAgenda" onchange="carregarAgendaAdmin()"><option value="">Todos</option></select></div>
-                <div><label>&nbsp;</label><button class="btn btn-blue" onclick="carregarAgendaAdmin()"><i class="fa-solid fa-rotate"></i> Atualizar</button></div>
+                <div>
+                    <label>Selecionar Data:</label>
+                    <input type="date" id="dataAgendaAdmin" onchange="carregarAgendaAdmin()">
+                </div>
+                <div>
+                    <label>Filtrar Profissional:</label>
+                    <select id="filtroProfissionalAgenda" onchange="carregarAgendaAdmin()">
+                        <option value="">Todos os Profissionais</option>
+                    </select>
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button class="btn btn-blue" onclick="carregarAgendaAdmin()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+                </div>
             </div>
         </div>
-        <div class="table-container table-responsive" id="listaAgendaAdmin"></div>
+        <div class="table-container table-responsive" id="listaAgendaAdmin">
+            <div style="text-align: center; padding: 60px; color: #9ca3af;">
+                <i class="fa-solid fa-calendar-day fa-3x" style="margin-bottom:15px; opacity:0.3;"></i><br>
+                Selecione uma data para ver os agendamentos.
+            </div>
+        </div>
     </div>
 
-    <!-- ABA CLIENTES (ATUALIZADA COM KPI) -->
+    <!-- === CONTEÚDO CLIENTES === -->
     <div id="clientes" class="tab-content">
         <!-- Novos Indicadores de Clientes -->
         <div class="kpi-grid">
@@ -230,70 +390,138 @@
         </div>
         <div class="table-container table-responsive">
             <table id="tabelaClientes">
-                <thead><tr><th>Código</th><th>Responsável</th><th>Criança</th><th>Nascimento</th><th>Telefone</th><th style="width: 80px;">Ações</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Responsável</th>
+                        <th>Criança</th>
+                        <th>Nascimento</th>
+                        <th>Telefone</th>
+                        <th>Fidelidade</th> <!-- NOVA COLUNA -->
+                        <th style="width: 80px;">Ações</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ABA INDICADORES -->
+    <!-- === CONTEÚDO INDICADORES === -->
     <div id="indicadores" class="tab-content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0; font-size:18px;">Desempenho do Mês</h3>
-            <button class="btn btn-blue" style="width:auto;" onclick="carregarIndicadoresAdmin()"><i class="fa-solid fa-rotate-right"></i> Atualizar</button>
+            <h3 style="margin:0; font-size:18px; color:var(--text-main);">Visão Geral do Mês</h3>
+            <button class="btn btn-blue" style="width:auto;" onclick="carregarIndicadoresAdmin()"><i class="fa-solid fa-rotate-right"></i> Atualizar Dados</button>
         </div>
+        
         <div class="kpi-grid">
-            <div class="kpi-card border-green"><h3>Faturamento</h3><div id="kpiFaturamento" class="kpi-value text-green">R$ 0,00</div></div>
-            <div class="kpi-card border-blue"><h3>Agendamentos</h3><div id="kpiTotal" class="kpi-value text-blue">0</div></div>
-            <div class="kpi-card border-blue"><h3>Comparecimento</h3><div id="kpiComparecimento" class="kpi-value">0%</div></div>
-            <div class="kpi-card border-red"><h3>Cancelamentos</h3><div id="kpiCancelados" class="kpi-value text-red">0</div></div>
+            <div class="kpi-card border-green">
+                <h3>Faturamento Estimado</h3>
+                <div id="kpiFaturamento" class="kpi-value text-green">R$ 0,00</div>
+            </div>
+            <div class="kpi-card border-blue">
+                <h3>Total Agendamentos</h3>
+                <div id="kpiTotal" class="kpi-value text-blue">0</div>
+            </div>
+            <div class="kpi-card border-blue">
+                <h3>Taxa Comparecimento</h3>
+                <div id="kpiComparecimento" class="kpi-value">0%</div>
+            </div>
+            <div class="kpi-card border-red">
+                <h3>Cancelamentos</h3>
+                <div id="kpiCancelados" class="kpi-value text-red">0</div>
+            </div>
         </div>
+
         <div class="card-panel">
-            <h3>Serviços Populares</h3>
+            <h3>Serviços Mais Populares</h3>
             <div class="table-container table-responsive" style="box-shadow:none; border:none;">
-                <table id="tabelaTopServicos"><thead><tr><th>Serviço</th><th>Qtd.</th><th>Receita Est.</th></tr></thead><tbody></tbody></table>
+                <table id="tabelaTopServicos">
+                    <thead><tr><th>Nome do Serviço</th><th>Quantidade</th><th>Receita Gerada</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- ABA SERVIÇOS -->
+    <!-- === CONTEÚDO SERVIÇOS === -->
     <div id="servicos" class="tab-content">
         <div class="card-panel">
-            <h3>Novo Serviço</h3>
+            <h3>Cadastrar Novo Serviço</h3>
             <div class="grid-form" style="grid-template-columns: 2fr 1fr 1fr auto;">
-                <input type="text" id="nomeServico" placeholder="Nome">
-                <input type="number" id="valorServico" placeholder="Valor">
-                <input type="number" id="tempoServico" placeholder="Minutos">
-                <button class="btn btn-green" onclick="salvarServico()"><i class="fa-solid fa-plus"></i></button>
+                <div>
+                    <label>Nome do Serviço:</label>
+                    <input type="text" id="nomeServico" placeholder="Ex: Corte Infantil">
+                </div>
+                <div>
+                    <label>Valor (R$):</label>
+                    <input type="number" id="valorServico" placeholder="0.00">
+                </div>
+                <div>
+                    <label>Tempo (Min):</label>
+                    <input type="number" id="tempoServico" placeholder="30">
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button class="btn btn-green" onclick="salvarServico()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                </div>
             </div>
         </div>
-        <div class="table-container table-responsive"><table id="tabelaServicos"><thead><tr><th>Nome</th><th>Valor</th><th>Tempo</th><th>Ação</th></tr></thead><tbody></tbody></table></div>
+        <div class="table-container table-responsive">
+            <table id="tabelaServicos">
+                <thead><tr><th>Nome</th><th>Valor</th><th>Tempo</th><th style="width: 50px;">Ação</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- ABA PROFISSIONAIS -->
+    <!-- === CONTEÚDO PROFISSIONAIS === -->
     <div id="profissionais" class="tab-content">
         <div class="card-panel">
-            <h3>Novo Profissional</h3>
-            <div class="form-group"><label>Nome:</label><input type="text" id="nomeProf" placeholder="Nome"></div>
-            <label>Dias:</label>
-            <div class="dias-container">
-                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Seg"><span>Seg</span></label>
-                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Ter"><span>Ter</span></label>
-                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Qua"><span>Qua</span></label>
-                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Qui"><span>Qui</span></label>
-                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Sex"><span>Sex</span></label>
-                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Sab"><span>Sáb</span></label>
+            <h3>Cadastrar Novo Profissional</h3>
+            
+            <div class="form-group">
+                <label>Nome Completo:</label>
+                <input type="text" id="nomeProf" placeholder="Nome do Profissional">
             </div>
-            <div class="grid-form" style="margin-top:20px;">
-                <div><label>Início:</label><input type="time" id="inicioProf"></div>
-                <div><label>Fim:</label><input type="time" id="fimProf"></div>
-                <div><label>&nbsp;</label><button class="btn btn-green" onclick="salvarProfissional()">Salvar</button></div>
+
+            <label style="margin-bottom: 10px;">Dias de Atendimento:</label>
+            <div class="dias-container">
+                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Seg"> <span>Seg</span></label>
+                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Ter"> <span>Ter</span></label>
+                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Qua"> <span>Qua</span></label>
+                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Qui"> <span>Qui</span></label>
+                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Sex"> <span>Sex</span></label>
+                <label class="dia-label"><input type="checkbox" name="diaTrabalho" value="Sab"> <span>Sáb</span></label>
+            </div>
+
+            <div class="grid-form" style="margin-top: 20px;">
+                <div>
+                    <label>Horário Início:</label>
+                    <input type="time" id="inicioProf">
+                </div>
+                <div>
+                    <label>Horário Fim:</label>
+                    <input type="time" id="fimProf">
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button class="btn btn-green" onclick="salvarProfissional()">
+                        <i class="fa-solid fa-user-plus"></i> Salvar Profissional
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="table-container table-responsive"><table id="tabelaProfissionais"><thead><tr><th>Nome</th><th>Horário</th><th>Dias</th><th>Ação</th></tr></thead><tbody></tbody></table></div>
+        
+        <div class="table-container table-responsive">
+            <table id="tabelaProfissionais">
+                <thead><tr><th>Nome</th><th>Horário</th><th>Dias</th><th style="width: 50px;">Ação</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+<!-- LIGAÇÃO COM O SCRIPT -->
 <script src="script.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // ============================================================
-// 1. CONFIGURAÇÃO (SUPABASE)
+// 1. CONFIGURAÇÃO E CONEXÃO COM O SUPABASE
 // ============================================================
 
 // ⚠️ COLE SUAS CHAVES AQUI
@@ -72,10 +72,9 @@ window.logarAdmin = function() {
     
     if (senhaInput.value === "admin123") {
         document.getElementById('loginArea').style.display = 'none';
-        
         const painel = document.getElementById('painelAdmin');
-        painel.classList.remove('hidden'); // Remove a classe que bloqueia
-        painel.style.display = 'block';    // Garante visibilidade
+        painel.classList.remove('hidden'); 
+        painel.style.display = 'block';    
         
         window.initAdmin();
     } else {
@@ -88,14 +87,16 @@ window.initAdmin = function() {
     const inputDate = document.getElementById('dataAgendaAdmin');
     if (inputDate) inputDate.value = hoje;
     
-    // Carrega tudo
-    if(window.carregarAgendaAdmin) window.carregarAgendaAdmin();
-    if(window.carregarServicosAdmin) window.carregarServicosAdmin();
-    if(window.carregarProfissionaisAdmin) window.carregarProfissionaisAdmin();
-    if(window.carregarIndicadoresAdmin) window.carregarIndicadoresAdmin();
-    if(window.carregarFiltroProfissionais) window.carregarFiltroProfissionais();
-    if(window.carregarClientesAdmin) window.carregarClientesAdmin();
+    safeCall(window.carregarAgendaAdmin);
+    safeCall(window.carregarServicosAdmin);
+    safeCall(window.carregarProfissionaisAdmin);
+    safeCall(window.carregarIndicadoresAdmin);
+    safeCall(window.carregarFiltroProfissionais);
+    safeCall(window.carregarClientesAdmin);
+    safeCall(window.carregarDadosAtendimentoRapido); // Carrega dados para aba Rápido
 };
+
+function safeCall(fn) { if (typeof fn === 'function') fn(); }
 
 window.abrirTab = function(tabName) {
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
@@ -193,10 +194,12 @@ window.carregarFiltroProfissionais = async function() {
     }
 };
 
+// --- NOVO: LÓGICA DE CLIENTES COM CONTAGEM DE FIDELIDADE ---
 window.carregarClientesAdmin = async function() {
     const termoResp = document.getElementById('buscaResponsavel')?.value.toLowerCase() || "";
     const termoCrianca = document.getElementById('buscaCrianca')?.value.toLowerCase() || "";
     
+    // Busca clientes e saldo de fidelidade
     let { data: clientes, error } = await supabaseClient.from('clientes').select('*').order('created_at', { ascending: false });
     
     if (error) return console.error(error);
@@ -240,11 +243,26 @@ window.carregarClientesAdmin = async function() {
         
         tbody.innerHTML = "";
         if (filtrados.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Nenhum encontrado</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Nenhum encontrado</td></tr>';
         } else {
             filtrados.forEach(c => {
                 const nasc = c.data_nascimento ? c.data_nascimento.split('-').reverse().join('/') : "-";
-                tbody.innerHTML += `<tr><td><strong>${c.codigo_cliente}</strong></td><td>${c.nome_responsavel}</td><td>${c.nome_crianca}</td><td>${nasc}</td><td>${c.telefone}</td><td><button class="btn btn-red" onclick="deletarItem('clientes', '${c.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                // Cálculo Fidelidade: Saldo atual % 11 (ex: 5/10)
+                const saldo = c.saldo_fidelidade || 0;
+                const progresso = saldo % 11;
+                const statusFid = progresso === 10 ? 
+                    `<span style="color:green; font-weight:bold;">GRÁTIS DISPONÍVEL!</span>` : 
+                    `<span style="color:#666;">${progresso}/10</span>`;
+
+                tbody.innerHTML += `<tr>
+                    <td><strong>${c.codigo_cliente}</strong></td>
+                    <td>${c.nome_responsavel}</td>
+                    <td>${c.nome_crianca}</td>
+                    <td>${nasc}</td>
+                    <td>${c.telefone}</td>
+                    <td>${statusFid}</td>
+                    <td><button class="btn btn-red" style="padding:5px 10px;" onclick="deletarItem('clientes', '${c.id}')"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>`;
             });
         }
     }
@@ -379,8 +397,90 @@ window.cancelarAgendamento = async function(id) {
     }
 };
 
+// --- NOVO: ATENDIMENTO RÁPIDO (LÓGICA) ---
+window.carregarDadosAtendimentoRapido = async function() {
+    const selServico = document.getElementById('rapidoServico');
+    const selProf = document.getElementById('rapidoProfissional');
+    
+    if(selServico && selProf) {
+        const { data: servicos } = await supabaseClient.from('servicos').select('*');
+        const { data: profs } = await supabaseClient.from('profissionais').select('*');
+        
+        selServico.innerHTML = '<option value="">Selecione...</option>';
+        if(servicos) servicos.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.nome; // Nome do serviço
+            opt.setAttribute('data-valor', s.valor);
+            opt.textContent = `${s.nome} (R$ ${s.valor})`;
+            selServico.appendChild(opt);
+        });
+
+        selProf.innerHTML = '<option value="">Selecione...</option>';
+        if(profs) profs.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.nome;
+            opt.textContent = p.nome;
+            selProf.appendChild(opt);
+        });
+    }
+};
+
+window.salvarAtendimentoRapido = async function() {
+    const nomeCliente = document.getElementById('rapidoNomeCliente').value || "Cliente Balcão";
+    const servicoSelect = document.getElementById('rapidoServico');
+    const profNome = document.getElementById('rapidoProfissional').value;
+    
+    if(!servicoSelect.value || !profNome) return window.showToast("Selecione Serviço e Profissional", 'error');
+
+    const servicoNome = servicoSelect.value;
+    const valor = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-valor'));
+    
+    // Dados para salvar (data de hoje, hora de agora)
+    const hoje = new Date();
+    const dataStr = hoje.toISOString().split('T')[0];
+    const horaStr = hoje.toTimeString().slice(0,5);
+
+    // 1. Cria cliente rápido (oculto/anônimo)
+    const codRandom = 'R-' + Math.floor(Math.random()*100000);
+    const { data: cliente, error: errCli } = await supabaseClient.from('clientes').insert([{
+        nome_responsavel: nomeCliente,
+        nome_crianca: nomeCliente,
+        telefone: '0000000000',
+        data_nascimento: dataStr,
+        codigo_cliente: codRandom,
+        origem: 'Balcão'
+    }]).select().single();
+
+    if(errCli) return window.showToast("Erro ao criar cliente: " + errCli.message, 'error');
+
+    // 2. Cria agendamento já como "Compareceu"
+    const { error } = await supabaseClient.from('agendamentos').insert([{
+        cliente_id: cliente.id,
+        servico: servicoNome,
+        valor_servico: valor,
+        profissional_nome: profNome,
+        data_agendada: dataStr,
+        horario_inicio: horaStr,
+        horario_fim: horaStr,
+        status: 'Compareceu',
+        eh_gratis: false
+    }]);
+
+    if(error) window.showToast("Erro ao salvar: " + error.message, 'error');
+    else {
+        window.showToast("Atendimento Registrado!", 'success');
+        // Limpar campos
+        document.getElementById('rapidoNomeCliente').value = "";
+        servicoSelect.value = "";
+        document.getElementById('rapidoProfissional').value = "";
+        
+        // Atualiza indicadores
+        window.carregarIndicadoresAdmin();
+    }
+};
+
 // ============================================================
-// 4. EVENT LISTENER PRINCIPAL (CARREGAMENTO DA PÁGINA)
+// 4. EVENT LISTENERS DE PÁGINA (CARREGAMENTO)
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -431,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- AGENDAR (CORREÇÃO DE TRANSIÇÃO E ZAP) ---
+    // --- AGENDAR ---
     const btnBuscar = document.getElementById('btnBuscarCliente');
     if (btnBuscar) {
         let clienteAtual = null;
@@ -471,7 +571,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             clienteAtual = data;
             
-            // CORREÇÃO: Força visibilidade do Passo 2 e oculta Passo 1
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step1').style.display = 'none';
             
@@ -488,7 +587,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Fidelidade
             const cortes = data.saldo_fidelidade || 0;
             const cortesNoCiclo = cortes % 11;
-            
             const areaFid = document.getElementById('fidelidadeArea');
             if (areaFid) {
                 areaFid.style.display = 'block';
@@ -503,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Lógica de Carregar Horários
+        // 2. Carregar Horários
         const dataInput = document.getElementById('dataInput');
         const servicoSelect = document.getElementById('servicoSelect');
 
@@ -521,18 +619,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const duracao = parseInt(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-tempo'));
                 
-                // Validação de Data/Hora Passada
+                // Validação de Data/Hora
                 const agora = new Date();
                 const dataHojeStr = agora.toLocaleDateString('pt-BR').split('/').reverse().join('-'); 
                 const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
                 const isHoje = (dataStr === dataHojeStr);
-
                 const partesData = dataStr.split('-'); 
                 const diaSemanaNum = new Date(partesData[0], partesData[1]-1, partesData[2]).getDay();
                 const diasMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
                 const diaTexto = diasMap[diaSemanaNum];
 
-                // 1. Busca Profissionais
+                // Profissionais
                 const { data: todosProfs } = await supabaseClient.from('profissionais').select('*');
                 const prosDoDia = todosProfs.filter(p => !p.dias_trabalho || p.dias_trabalho.includes(diaTexto));
 
@@ -541,14 +638,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // 2. Busca Ocupados
+                // Ocupados
                 const { data: ocupados } = await supabaseClient
                     .from('agendamentos')
                     .select('horario_inicio, horario_fim, profissional_nome')
                     .eq('data_agendada', dataStr)
                     .neq('status', 'Cancelado');
 
-                // Define limites do dia
                 let menorInicio = 24 * 60;
                 let maiorFim = 0;
                 prosDoDia.forEach(p => {
@@ -561,17 +657,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 lista.innerHTML = "";
-                disponibilidadePorSlot = {};
+                let mapSlots = {};
                 let temHorario = false;
 
-                // Loop de 30 em 30 min
                 for (let m = menorInicio; m <= maiorFim - duracao; m += 30) {
                     if (isHoje && m < (minutosAgora + 30)) continue;
 
                     const hAtual = Math.floor(m / 60);
                     const mAtual = m % 60;
                     const horarioFormatado = `${hAtual.toString().padStart(2,'0')}:${mAtual.toString().padStart(2,'0')}`;
-                    
                     const inicioSlot = m;
                     const fimSlot = m + duracao;
                     const livres = [];
@@ -596,12 +690,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     if (livres.length > 0) {
-                        disponibilidadePorSlot[horarioFormatado] = livres;
+                        // Salva no escopo global para acesso
+                        if(!window.disponibilidadePorSlot) window.disponibilidadePorSlot = {};
+                        window.disponibilidadePorSlot[horarioFormatado] = livres;
+                        
                         const btn = document.createElement('span');
                         btn.className = 'slot-btn';
                         btn.textContent = horarioFormatado;
-                        
-                        // CLIQUE NO HORÁRIO
                         btn.onclick = () => {
                             document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
@@ -618,7 +713,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         temHorario = true;
                     }
                 }
-                
                 if (!temHorario) lista.innerHTML = '<div style="padding:15px">Dia lotado.</div>';
             };
 
@@ -626,7 +720,6 @@ document.addEventListener('DOMContentLoaded', () => {
             servicoSelect.addEventListener('change', carregarHorarios);
         }
 
-        // Funções auxiliares internas
         function mostrarModalProfissionais(lista) {
             const modal = document.getElementById('modalProfissionais');
             const divLista = document.getElementById('listaProfissionaisModal');
@@ -663,13 +756,12 @@ document.addEventListener('DOMContentLoaded', () => {
             window.setLoading('btnConfirmarAgendamento', true, "Confirmando...");
 
             const [h, m] = horarioEscolhido.split(':').map(Number);
-            const hF = Math.floor((h*60 + m + duracaoEscolhida)/60).toString().padStart(2,'0');
-            const mF = ((h*60 + m + duracaoEscolhida)%60).toString().padStart(2,'0');
+            const fimMinutos = (h * 60) + m + duracaoEscolhida;
+            const hF = Math.floor(fimMinutos / 60).toString().padStart(2, '0');
+            const mF = (fimMinutos % 60).toString().padStart(2, '0');
             const horarioFim = `${hF}:${mF}`;
 
             const valor = parseFloat(servicoSelect.options[servicoSelect.selectedIndex].getAttribute('data-valor'));
-            
-            // Nome do serviço para o WhatsApp
             const servicoNome = servicoSelect.options[servicoSelect.selectedIndex].text;
 
             const { error } = await supabaseClient.from('agendamentos').insert([{
@@ -688,15 +780,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.showToast("Erro: " + error.message, 'error');
                 window.setLoading('btnConfirmarAgendamento', false);
             } else {
-                // CORREÇÃO: Transição para o Passo 3
                 document.getElementById('step2').classList.remove('active');
                 document.getElementById('step2').style.display = 'none';
-                
                 document.getElementById('step3').classList.remove('hidden');
                 document.getElementById('step3').classList.add('active');
                 document.getElementById('step3').style.display = 'block';
                 
-                // Configura botão Zap
                 const btnZap = document.getElementById('btnZap');
                 if(btnZap) {
                     btnZap.onclick = () => {
@@ -707,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- GERENCIAR ---
+    // --- LÓGICA DE GERENCIAR (gerenciar.html) ---
     const btnBuscaAgend = document.getElementById('btnBuscarAgendamentos');
     if (btnBuscaAgend) {
         btnBuscaAgend.addEventListener('click', async () => {
@@ -745,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-}); // FIM DOMContentLoaded
+}); // FIM DO DOMContentLoaded
 
 // --- FUNÇÕES EXTERNAS ---
 window.enviarComprovanteZap = function(cliente, data, hora, prof, servico) {
